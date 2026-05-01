@@ -277,8 +277,8 @@ export function RestartFlow() {
     <main className="relative min-h-screen overflow-hidden px-3 py-4 text-white sm:px-6 lg:px-8">
       <div className="noise-layer pointer-events-none absolute inset-0 opacity-50" />
 
-      <div className="relative mx-auto grid min-h-screen w-full max-w-[1180px] gap-6 py-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-        <section className="relative overflow-hidden rounded-[30px] border border-white/6 bg-[#0A0A0A] p-5 md:min-h-[560px] lg:sticky lg:top-6">
+      <div className="relative mx-auto grid min-h-screen w-full max-w-[1180px] items-start gap-6 py-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/6 bg-[#0A0A0A] p-5 md:min-h-[560px]">
           <div className="relative z-10">
             <div className="heading-font inline-flex rounded-full bg-[#303030] px-4 py-2 text-[12px] uppercase text-[#78F761]">
               808 Демок
