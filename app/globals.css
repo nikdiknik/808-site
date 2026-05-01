@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --black: #0a0a0a;
+  --mint: #78f761;
+  --mint-soft: rgba(120, 247, 97, 0.16);
+  --violet: #d621d7;
+  --floor-1: #1e1e1e;
+  --floor-2: #303030;
+  --floor-3: #3d3d3d;
+  --text-primary: #ffffff;
+  --text-secondary: #c9c9c9;
+  --text-tertiary: #838383;
+  --font-heading: "JetBrains Mono";
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--black);
+  color: var(--text-primary);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(120, 247, 97, 0.11), transparent 32rem),
+    radial-gradient(circle at 92% 0%, rgba(214, 33, 215, 0.1), transparent 34rem),
+    var(--black);
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--mint);
+  color: var(--black);
+}
+
+.heading-font {
+  font-family: var(--font-heading), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.noise-layer {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.mint-glow {
+  box-shadow:
+    0 0 0 1px rgba(120, 247, 97, 0.2),
+    0 18px 56px rgba(120, 247, 97, 0.1);
+}
