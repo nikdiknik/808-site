@@ -412,22 +412,28 @@ export function RestartFlow() {
                 </ul>
               </ResultCard>
 
-              <div className="grid gap-3 rounded-[26px] bg-[#1E1E1E] p-4 md:col-span-2 md:grid-cols-3">
+              <section className="rounded-[26px] border border-white/6 bg-[#303030] p-5 md:col-span-2">
+                <p className="heading-font text-[12px] uppercase text-[#78F761]">bonus</p>
+                <h3 className="heading-font mt-3 text-[22px] leading-tight text-white">Чек-лист прогресса</h3>
+                <p className="mt-4 text-[17px] leading-relaxed text-[#D8D8D8]">
+                  Лови бонус — чеклист прогресса. Поможет довести трек до конца и ничего не упустить.
+                </p>
+                <PillButton variant="secondary" className="mt-5 w-full md:w-auto md:min-w-[240px]" onClick={downloadChecklist}>
+                  <ArrowDownToLine size={18} />
+                  Получить чек-лист
+                </PillButton>
+                {checklistError ? <p className="mt-3 text-[14px] text-[#FFD8FF]">{checklistError}</p> : null}
+              </section>
+
+              <div className="grid gap-3 rounded-[26px] bg-[#1E1E1E] p-4 md:col-span-2 md:grid-cols-2">
                 <PillButton variant="secondary" onClick={resetFlow}>
                   <RotateCcw size={18} />
                   Попробовать ещё раз
-                </PillButton>
-                <PillButton variant="secondary" onClick={downloadChecklist}>
-                  <ArrowDownToLine size={18} />
-                  Получить чек-лист
                 </PillButton>
                 <PillButton onClick={openPremium}>
                   <Lock size={18} />
                   Разблокировать Premium
                 </PillButton>
-                {checklistError ? (
-                  <p className="text-[14px] text-[#FFD8FF] md:col-span-3">{checklistError}</p>
-                ) : null}
               </div>
             </div>
           ) : null}
