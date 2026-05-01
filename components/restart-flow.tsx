@@ -62,23 +62,29 @@ function ChoiceCard({
   title,
   meta,
   description,
-  onClick,
+  onSelect,
 }: {
   selected: boolean;
   title: string;
   meta: string;
   description?: string;
-  onClick: () => void;
+  onSelect: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      aria-pressed={selected}
+      onClick={onSelect}
+      onPointerUp={(event) => {
+        if (event.pointerType !== "mouse") {
+          onSelect();
+        }
+      }}
       className={clsx(
-        "group min-h-[76px] rounded-[22px] border p-4 text-left transition duration-200",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#78F761]",
+        "group min-h-[76px] w-full cursor-pointer rounded-[22px] border p-4 text-left transition duration-200 active:scale-[0.99]",
+        "relative z-10 touch-manipulation select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#78F761]",
         selected
-          ? "border-[#78F761] bg-[#78F761] text-[#0A0A0A] mint-glow"
+          ? "border-[#78F761] bg-[#78F761] text-[#0A0A0A] shadow-[0_0_0_1px_rgba(120,247,97,0.2),0_18px_50px_rgba(120,247,97,0.12)]"
           : "border-white/5 bg-[#303030] text-white hover:border-white/12 hover:bg-[#3D3D3D]",
       )}
     >
@@ -175,6 +181,19 @@ export function RestartFlow() {
     if (!problem) return "ступор ещё не выбран";
     return problemOptions.find((item) => item.id === problem)?.title || "ступор выбран";
   }, [problem]);
+
+  function selectExperience(nextExperience: ExperienceId) {
+    setExperience(nextExperience);
+    setError(null);
+  }
+
+  function selectProblem(nextProblem: ProblemId) {
+    setProblem(nextProblem);
+    setError(null);
+    if (nextProblem !== "other") {
+      setOtherText("");
+    }
+  }
 
   useEffect(() => {
     if (!isLoading) return;
@@ -310,7 +329,7 @@ export function RestartFlow() {
                     title={option.title}
                     meta={option.meta}
                     description={option.description}
-                    onClick={() => setExperience(option.id)}
+                    onSelect={() => selectExperience(option.id)}
                   />
                 ))}
               </div>
@@ -325,7 +344,7 @@ export function RestartFlow() {
                     selected={problem === option.id}
                     title={option.title}
                     meta={option.meta}
-                    onClick={() => setProblem(option.id)}
+                    onSelect={() => selectProblem(option.id)}
                   />
                 ))}
               </div>
