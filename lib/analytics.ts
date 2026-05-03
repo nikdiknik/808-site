@@ -3,9 +3,9 @@ import path from "node:path";
 
 import type { ExperienceId, ProblemId } from "@/lib/options";
 
-type AnalyticsEvent = "started" | "completed" | "failed" | "checklist_clicked" | "premium_clicked";
+export type AnalyticsEvent = "started" | "completed" | "failed" | "checklist_clicked" | "premium_clicked";
 
-type AnalyticsData = {
+export type AnalyticsData = {
   totals: Record<AnalyticsEvent, number>;
   byExperience: Partial<Record<ExperienceId, number>>;
   byProblem: Partial<Record<ProblemId, number>>;
@@ -37,6 +37,10 @@ async function loadAnalytics(): Promise<AnalyticsData> {
   } catch {
     return structuredClone(defaultAnalytics);
   }
+}
+
+export async function getAnalyticsSnapshot(): Promise<AnalyticsData> {
+  return loadAnalytics();
 }
 
 export async function recordAnalyticsEvent(
