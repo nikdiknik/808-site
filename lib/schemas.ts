@@ -11,7 +11,7 @@ export const restartRequestSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["otherText"],
-        message: "Опиши проблему, если выбрал вариант Другое.",
+        message: "Опиши проблему, если выбрал вариант Другое",
       });
     }
   });

@@ -16,10 +16,10 @@ type ApiError = {
 };
 
 const loadingLines = [
-  "Слушаю, где трек заклинило...",
-  "Кручу ручки креативного синта...",
-  "Ищу методику без советов уровня «просто вдохновись»...",
-  "Снимаю пыль с зависшей демки...",
+  "Слушаю, где трек заклинило",
+  "Кручу ручки креативного синта",
+  "Ищу методику без советов уровня «просто вдохновись»",
+  "Снимаю пыль с зависшей демки",
 ];
 
 function PillButton({
@@ -153,7 +153,8 @@ function PremiumModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <p className="mt-5 text-[17px] leading-relaxed text-[#C9C9C9]">
-          Premium откроет все методики, расширенный трекер прогресса, генератор идей и сохранение результатов по треку
+          Premium откроет все методики, расширенный трекер прогресса, генератор идей и сохранение результатов
+          по треку
         </p>
         <PillButton className="mt-6 w-full">
           <Lock size={18} />
@@ -224,12 +225,12 @@ export function RestartFlow() {
 
       const data = (await response.json()) as RestartResult | ApiError;
       if (!response.ok) {
-        throw new Error("error" in data ? data.error?.message : "Не получилось подобрать перезапуск.");
+        throw new Error("error" in data ? data.error?.message : "Не получилось подобрать перезапуск");
       }
 
       setResult(data as RestartResult);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Что-то пошло не так. Попробуй ещё раз.");
+      setError(caughtError instanceof Error ? caughtError.message : "Что-то пошло не так. Попробуй ещё раз");
     } finally {
       setIsLoading(false);
     }
@@ -258,7 +259,7 @@ export function RestartFlow() {
     const response = await fetch("/api/checklist");
     if (!response.ok) {
       const data = (await response.json().catch(() => null)) as ApiError | null;
-      setChecklistError(data?.error?.message || "Не получилось скачать чек-лист.");
+      setChecklistError(data?.error?.message || "Не получилось скачать чек-лист");
       return;
     }
 
@@ -287,7 +288,7 @@ export function RestartFlow() {
               Подобрать сценарий перезапуска
             </h1>
             <p className="mt-5 max-w-[520px] text-[18px] leading-relaxed text-[#C9C9C9]">
-              Для демки, которая вроде живая, но уже третий вечер смотрит на тебя из DAW без движения.
+              Для демки, которая вроде живая, но уже третий вечер смотрит на тебя из DAW без движения
             </p>
           </div>
 
@@ -353,7 +354,7 @@ export function RestartFlow() {
                 <textarea
                   value={otherText}
                   onChange={(event) => setOtherText(event.target.value)}
-                  placeholder="Например: куплет нормальный, но припев звучит как заглушка..."
+                  placeholder="Например: куплет нормальный, но припев звучит как заглушка"
                   className="mt-4 min-h-[140px] w-full resize-none rounded-[18px] border border-white/6 bg-[#1E1E1E] p-4 text-[16px] leading-relaxed text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
                 />
               ) : null}
@@ -361,8 +362,8 @@ export function RestartFlow() {
 
             {!result && !isLoading ? (
               <div className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-[#0F0F0F] p-4 text-[15px] leading-relaxed text-[#838383]">
-                Выбери свой уровень опыта в музыке и этап, на котором застрял трек. Мы разберём ситуацию, подберём
-                технику перезапуска и дадим практические советы, что сделать дальше.
+                Выбери свой опыт в музыке и этап, на котором застрял трек. Мы разберём ситуацию, подберём технику
+                перезапуска и дадим советы, что делать дальше
               </div>
             ) : null}
 
@@ -416,7 +417,7 @@ export function RestartFlow() {
                 <p className="heading-font text-[12px] uppercase text-[#78F761]">bonus</p>
                 <h3 className="heading-font mt-3 text-[22px] leading-tight text-white">Чек-лист прогресса</h3>
                 <p className="mt-4 text-[17px] leading-relaxed text-[#D8D8D8]">
-                  Лови бонус — чеклист прогресса. Поможет довести трек до конца и ничего не упустить.
+                  Лови бонус — чеклист прогресса. Поможет довести трек до конца и ничего не упустить
                 </p>
                 <PillButton
                   variant="secondary"

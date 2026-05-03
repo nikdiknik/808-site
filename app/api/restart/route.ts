@@ -20,8 +20,8 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof ZodError
-        ? error.issues[0]?.message || "Проверь выбранные параметры."
-        : "Не получилось прочитать запрос.";
+        ? error.issues[0]?.message || "Проверь выбранные параметры"
+        : "Не получилось прочитать запрос";
     return errorResponse(message, 400, "INVALID_REQUEST");
   }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     if (error instanceof Error && error.message === "OPENAI_API_KEY_MISSING") {
       return errorResponse(
-        "OpenAI ключ ещё не подключён. Добавь OPENAI_API_KEY в переменные окружения.",
+        "OpenAI ключ ещё не подключён. Добавь OPENAI_API_KEY в переменные окружения",
         500,
         "OPENAI_API_KEY_MISSING",
       );
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     if (error instanceof Error && (error.message.includes("ENOENT") || error.message === "METHODS_EMPTY")) {
       return errorResponse(
-        "Не нашёл таблицу методик. Проверь METHODS_TSV_PATH и файл data/methods.tsv.",
+        "Не нашёл таблицу методик. Проверь METHODS_TSV_PATH и файл data/methods.tsv",
         500,
         "METHODS_NOT_FOUND",
       );
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
     console.error("Restart generation failed", error);
     return errorResponse(
-      "Не удалось подобрать перезапуск. Попробуй ещё раз через минуту.",
+      "Не удалось подобрать перезапуск. Попробуй ещё раз через минуту",
       500,
       "OPENAI_REQUEST_FAILED",
     );

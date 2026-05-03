@@ -9,13 +9,13 @@ export const experienceOptions = [
     id: "middle",
     title: "Миддл",
     meta: "2-5 лет",
-    description: "Есть база, но трек снова висит",
+    description: "Есть база, но трек снова висит",
   },
   {
     id: "advanced",
     title: "Продвинутый",
     meta: "5-7 лет",
-    description: "Хочется свежего угла и точного пинка",
+    description: "Хочется свежего угла и точного пинка",
   },
   {
     id: "pro",
@@ -33,17 +33,17 @@ export const problemOptions = [
   },
   {
     id: "no_structure",
-    title: "Есть идея, но нет структуры трека",
-    meta: "куски не складываются",
+    title: "Есть идея, но нет структуры трека",
+    meta: "куски не складываются",
   },
   {
     id: "no_lyrics",
     title: "Нет идей для текста",
-    meta: "слова не цепляют",
+    meta: "слова не цепляют",
   },
   {
     id: "arrangement",
-    title: "Не получается доделать аранжировку",
+    title: "Не получается доделать аранжировку",
     meta: "петля крутится часами",
   },
   {
@@ -65,8 +65,8 @@ export const experienceLabels: Record<ExperienceId, string> = {
 
 export const problemLabels: Record<ProblemId, string> = {
   no_idea: "Нет идеи трека",
-  no_structure: "Есть идея, но нет структуры трека",
+  no_structure: "Есть идея, но нет структуры трека",
   no_lyrics: "Нет идей для текста",
-  arrangement: "Не получается доделать аранжировку",
+  arrangement: "Не получается доделать аранжировку",
   other: "Другое",
 };

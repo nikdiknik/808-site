@@ -9,8 +9,8 @@ const metricLabels = {
   started: "Запусков сценария",
   completed: "Успешных генераций",
   failed: "Ошибок генерации",
-  checklist_clicked: "Кликов по чек-листу",
-  premium_clicked: "Кликов по Premium",
+  checklist_clicked: "Кликов по чек-листу",
+  premium_clicked: "Кликов по Premium",
 } as const;
 
 function formatDate(value: string) {
@@ -49,7 +49,7 @@ function Breakdown({
             </div>
           ))
         ) : (
-          <p className="rounded-[16px] border border-dashed border-white/10 p-4 text-[#838383]">Данных пока нет.</p>
+          <p className="rounded-[16px] border border-dashed border-white/10 p-4 text-[#838383]">Данных пока нет</p>
         )}
       </div>
     </section>
@@ -92,7 +92,7 @@ export default async function AnalyticsPage() {
               href="/"
               className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#303030] px-5 text-[15px] font-bold text-white"
             >
-              Вернуться на сайт
+              Вернуться на сайт
             </Link>
           </div>
 
@@ -100,13 +100,13 @@ export default async function AnalyticsPage() {
             {Object.entries(metricLabels).map(([key, label]) => (
               <StatCard key={key} label={label} value={analytics.totals[key as keyof typeof metricLabels]} />
             ))}
-            <StatCard label="Конверсия в ответ" value={`${conversionRate}%`} />
+            <StatCard label="Конверсия в ответ" value={`${conversionRate}%`} />
           </div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <Breakdown title="По уровню опыта" rows={experienceRows} />
-          <Breakdown title="По проблеме / ступору" rows={problemRows} />
+          <Breakdown title="По уровню опыта" rows={experienceRows} />
+          <Breakdown title="По проблеме / ступору" rows={problemRows} />
         </div>
       </div>
     </main>

@@ -33,7 +33,7 @@ export async function GET() {
       {
         error: {
           code: "CHECKLIST_NOT_FOUND",
-          message: "Чек-лист пока не найден. Проверь CHECKLIST_FILE_PATH.",
+          message: "Чек-лист пока не найден. Проверь CHECKLIST_FILE_PATH",
         },
       },
       { status: 404 },

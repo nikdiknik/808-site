@@ -34,7 +34,7 @@ const ptRootUi = localFont({
 
 export const metadata: Metadata = {
   title: "808 Демок",
-  description: "Подбери сценарий перезапуска для зависшей демки.",
+  description: "Подбери сценарий перезапуска для зависшей демки",
 };
 
 export const viewport: Viewport = {
