@@ -30,7 +30,7 @@ ANALYTICS_PATH=data/analytics.json
 RAILWAY_VOLUME_MOUNT_PATH=/data
 ```
 
-`RAILWAY_VOLUME_MOUNT_PATH` Railway добавляет автоматически, когда Volume attached к сервису. Если эта переменная есть, сайт сам пишет аналитику в `${RAILWAY_VOLUME_MOUNT_PATH}/analytics.json`. `ANALYTICS_PATH` можно не задавать.
+`RAILWAY_VOLUME_MOUNT_PATH` Railway добавляет автоматически, когда Volume attached к сервису. Если эта переменная есть, сайт сам пишет аналитику в `${RAILWAY_VOLUME_MOUNT_PATH}/analytics.json`. `ANALYTICS_PATH` можно не задавать. Если обе переменные заданы, Railway Volume имеет приоритет.
 
 ## Railway deploy
 

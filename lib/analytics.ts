@@ -36,8 +36,7 @@ const defaultAnalytics: AnalyticsData = {
 
 function getAnalyticsPath(): string {
   const volumePath = process.env.RAILWAY_VOLUME_MOUNT_PATH;
-  const rawPath =
-    process.env.ANALYTICS_PATH || (volumePath ? path.join(volumePath, "analytics.json") : "data/analytics.json");
+  const rawPath = volumePath ? path.join(volumePath, "analytics.json") : process.env.ANALYTICS_PATH || "data/analytics.json";
   return path.isAbsolute(rawPath) ? rawPath : path.join(process.cwd(), rawPath);
 }
 
