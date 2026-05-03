@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -26,14 +27,44 @@ const defaultAnalytics: AnalyticsData = {
 };
 
 function getAnalyticsPath(): string {
-  const rawPath = process.env.ANALYTICS_PATH || "data/analytics.json";
+  const rawPath = process.env.ANALYTICS_PATH || (existsSync("/data") ? "/data/analytics.json" : "data/analytics.json");
   return path.isAbsolute(rawPath) ? rawPath : path.join(process.cwd(), rawPath);
+}
+
+function normalizeBreakdown<T extends string>(
+  rows: Partial<Record<T, number>>,
+  totalStarted: number,
+): Partial<Record<T, number>> {
+  const entries = Object.entries(rows) as Array<[T, number]>;
+  const sum = entries.reduce((total, [, value]) => total + (value || 0), 0);
+  if (!totalStarted || sum <= totalStarted) return rows;
+
+  let remaining = totalStarted;
+  const normalized: Partial<Record<T, number>> = {};
+
+  entries
+    .sort(([, first], [, second]) => (second || 0) - (first || 0))
+    .forEach(([key, value], index) => {
+      const nextValue =
+        index === entries.length - 1 ? remaining : Math.min(remaining, Math.max(1, Math.round((value / sum) * totalStarted)));
+      if (nextValue > 0) {
+        normalized[key] = nextValue;
+        remaining -= nextValue;
+      }
+    });
+
+  return normalized;
 }
 
 async function loadAnalytics(): Promise<AnalyticsData> {
   try {
     const raw = await readFile(getAnalyticsPath(), "utf8");
-    return { ...defaultAnalytics, ...JSON.parse(raw) };
+    const data = { ...defaultAnalytics, ...JSON.parse(raw) } as AnalyticsData;
+    return {
+      ...data,
+      byExperience: normalizeBreakdown(data.byExperience, data.totals.started),
+      byProblem: normalizeBreakdown(data.byProblem, data.totals.started),
+    };
   } catch {
     return structuredClone(defaultAnalytics);
   }
@@ -52,10 +83,10 @@ export async function recordAnalyticsEvent(
     const data = await loadAnalytics();
 
     data.totals[event] = (data.totals[event] || 0) + 1;
-    if (context?.experience) {
+    if (event === "started" && context?.experience) {
       data.byExperience[context.experience] = (data.byExperience[context.experience] || 0) + 1;
     }
-    if (context?.problem) {
+    if (event === "started" && context?.problem) {
       data.byProblem[context.problem] = (data.byProblem[context.problem] || 0) + 1;
     }
     data.lastUpdatedAt = new Date().toISOString();

@@ -362,7 +362,7 @@ export function RestartFlow() {
 
             {!result && !isLoading ? (
               <div className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-[#0F0F0F] p-4 text-[15px] leading-relaxed text-[#838383]">
-                Выбери свой опыт в музыке и этап, на котором застрял трек. Мы разберём ситуацию, подберём технику
+                Выбери свой опыт в музыке и этап, на котором застрял трек. Мы разберём ситуацию, подберём технику
                 перезапуска и дадим советы, что делать дальше
               </div>
             ) : null}
@@ -417,7 +417,7 @@ export function RestartFlow() {
                 <p className="heading-font text-[12px] uppercase text-[#78F761]">bonus</p>
                 <h3 className="heading-font mt-3 text-[22px] leading-tight text-white">Чек-лист прогресса</h3>
                 <p className="mt-4 text-[17px] leading-relaxed text-[#D8D8D8]">
-                  Лови бонус — чеклист прогресса. Поможет довести трек до конца и ничего не упустить
+                  Лови бонус: чеклист прогресса. Поможет довести трек до конца и ничего не упустить
                 </p>
                 <PillButton
                   variant="secondary"
