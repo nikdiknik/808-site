@@ -10,6 +10,8 @@ cp .env.example .env.local
 npm run dev
 ```
 
+Локальный dev-сервер откроется на `http://localhost:3000`.
+
 `OPENAI_API_KEY` нужен только для реальной генерации ответа. Без ключа сайт всё равно билдится и запускается, но `/api/restart` вернёт безопасную ошибку.
 
 ## Переменные окружения
@@ -35,6 +37,8 @@ ANALYTICS_PATH=/data/analytics.json
 3. Добавить `ANALYTICS_PATH=/data/analytics.json`.
 4. Подключить Volume с mount path `/data`.
 5. Railway выполнит `npm run build` и запустит `npm run start`.
+
+`npm run start` явно слушает `0.0.0.0` и порт из `PORT`, который Railway передаёт контейнеру. Если `PORT` не задан, локальный production-start использует `3000`.
 
 ## Данные
 
