@@ -291,7 +291,7 @@ export function RestartFlow() {
             </p>
           </div>
 
-          <div className="relative mt-10 h-[280px] overflow-hidden rounded-[28px] bg-[#050505] sm:h-[360px] lg:h-[420px]">
+          <div className="relative mt-10 h-[330px] overflow-hidden rounded-[28px] bg-[#050505] sm:h-[420px] lg:h-[500px]">
             <div className="absolute left-8 top-10 heading-font text-[96px] leading-none text-[#78F761] opacity-20 blur-[5px]">
               8
             </div>
@@ -361,8 +361,8 @@ export function RestartFlow() {
 
             {!result && !isLoading ? (
               <div className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-[#0F0F0F] p-4 text-[15px] leading-relaxed text-[#838383]">
-                Выбери опыт и место, где демка зависла. Дальше backend спросит OpenAI по таблице методик и вернёт тебе
-                конкретный перезапуск.
+                Выбери свой уровень опыта в музыке и этап, на котором застрял трек. Мы разберём ситуацию, подберём
+                технику перезапуска и дадим практические советы, что сделать дальше.
               </div>
             ) : null}
 
