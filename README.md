@@ -27,18 +27,19 @@ ANALYTICS_PATH=data/analytics.json
 Для Railway с Volume:
 
 ```bash
-ANALYTICS_PATH=/data/analytics.json
+RAILWAY_VOLUME_MOUNT_PATH=/data
 ```
+
+`RAILWAY_VOLUME_MOUNT_PATH` Railway добавляет автоматически, когда Volume attached к сервису. Если эта переменная есть, сайт сам пишет аналитику в `${RAILWAY_VOLUME_MOUNT_PATH}/analytics.json`. `ANALYTICS_PATH` можно не задавать.
 
 ## Railway deploy
 
 1. Подключить GitHub repo к Railway.
 2. Добавить `OPENAI_API_KEY` в Variables.
-3. Добавить `ANALYTICS_PATH=/data/analytics.json`.
-4. Подключить Volume с mount path `/data`.
-5. Railway выполнит `npm run build` и запустит `npm run start`.
+3. Подключить Volume с mount path `/data`.
+4. Railway выполнит `npm run build` и запустит production-сервер.
 
-`npm run start` явно слушает `0.0.0.0` и порт из `PORT`, который Railway передаёт контейнеру. Если `PORT` не задан, локальный production-start использует `3000`.
+Production-start явно слушает `0.0.0.0` и порт из `PORT`, который Railway передаёт контейнеру. Если `PORT` не задан, локальный `npm run start` использует `3000`.
 
 ## Данные
 

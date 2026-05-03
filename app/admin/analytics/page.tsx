@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getAnalyticsSnapshot } from "@/lib/analytics";
+import { getAnalyticsSnapshot, getAnalyticsStorageInfo } from "@/lib/analytics";
 import { experienceLabels, problemLabels, type ExperienceId, type ProblemId } from "@/lib/options";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +57,7 @@ function Breakdown({
 }
 
 export default async function AnalyticsPage() {
-  const analytics = await getAnalyticsSnapshot();
+  const [analytics, storageInfo] = await Promise.all([getAnalyticsSnapshot(), getAnalyticsStorageInfo()]);
   const totalRequests = analytics.totals.started;
   const successfulRequests = analytics.totals.completed;
   const conversionRate = totalRequests ? Math.round((successfulRequests / totalRequests) * 100) : 0;
@@ -108,6 +108,28 @@ export default async function AnalyticsPage() {
           <Breakdown title="По уровню опыта" rows={experienceRows} />
           <Breakdown title="По проблеме / ступору" rows={problemRows} />
         </div>
+
+        <section className="mt-6 rounded-[26px] border border-white/6 bg-[#1E1E1E] p-5">
+          <h2 className="heading-font text-[22px] text-white">Storage status</h2>
+          <div className="mt-5 grid gap-3 text-[15px] text-[#C9C9C9] md:grid-cols-2">
+            <div className="rounded-[16px] bg-[#303030] p-4">
+              <p className="heading-font text-[12px] uppercase text-[#78F761]">analytics path</p>
+              <p className="mt-2 break-all">{storageInfo.analyticsPath}</p>
+            </div>
+            <div className="rounded-[16px] bg-[#303030] p-4">
+              <p className="heading-font text-[12px] uppercase text-[#78F761]">volume mount</p>
+              <p className="mt-2 break-all">{storageInfo.mountPath || "Volume не обнаружен"}</p>
+            </div>
+            <div className="rounded-[16px] bg-[#303030] p-4">
+              <p className="heading-font text-[12px] uppercase text-[#78F761]">json file</p>
+              <p className="mt-2">{storageInfo.fileExists ? "Файл найден" : "Файл ещё не создан"}</p>
+            </div>
+            <div className="rounded-[16px] bg-[#303030] p-4">
+              <p className="heading-font text-[12px] uppercase text-[#78F761]">write access</p>
+              <p className="mt-2">{storageInfo.directoryWritable ? "Запись доступна" : "Нет доступа к записи"}</p>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );

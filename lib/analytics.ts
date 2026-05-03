@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
 import path from "node:path";
 
 import type { ExperienceId, ProblemId } from "@/lib/options";
@@ -11,6 +12,13 @@ export type AnalyticsData = {
   byExperience: Partial<Record<ExperienceId, number>>;
   byProblem: Partial<Record<ProblemId, number>>;
   lastUpdatedAt: string;
+};
+
+export type AnalyticsStorageInfo = {
+  analyticsPath: string;
+  mountPath: string;
+  fileExists: boolean;
+  directoryWritable: boolean;
 };
 
 const defaultAnalytics: AnalyticsData = {
@@ -27,8 +35,20 @@ const defaultAnalytics: AnalyticsData = {
 };
 
 function getAnalyticsPath(): string {
-  const rawPath = process.env.ANALYTICS_PATH || (existsSync("/data") ? "/data/analytics.json" : "data/analytics.json");
+  const volumePath = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  const rawPath =
+    process.env.ANALYTICS_PATH || (volumePath ? path.join(volumePath, "analytics.json") : "data/analytics.json");
   return path.isAbsolute(rawPath) ? rawPath : path.join(process.cwd(), rawPath);
+}
+
+async function canWriteDirectory(directory: string): Promise<boolean> {
+  try {
+    await mkdir(directory, { recursive: true });
+    await access(directory, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function normalizeBreakdown<T extends string>(
@@ -72,6 +92,18 @@ async function loadAnalytics(): Promise<AnalyticsData> {
 
 export async function getAnalyticsSnapshot(): Promise<AnalyticsData> {
   return loadAnalytics();
+}
+
+export async function getAnalyticsStorageInfo(): Promise<AnalyticsStorageInfo> {
+  const analyticsPath = getAnalyticsPath();
+  const directory = path.dirname(analyticsPath);
+
+  return {
+    analyticsPath,
+    mountPath: process.env.RAILWAY_VOLUME_MOUNT_PATH || "",
+    fileExists: existsSync(analyticsPath),
+    directoryWritable: await canWriteDirectory(directory),
+  };
 }
 
 export async function recordAnalyticsEvent(
