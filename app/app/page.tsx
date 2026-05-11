@@ -3,6 +3,10 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
 
+import { getCurrentUser } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
 type FeatureTileData = {
   title: string;
   description: string;
@@ -18,7 +22,7 @@ const featureTiles: FeatureTileData[] = [
     description: "Следи за всеми треками в одном месте: что уже готово, где залип и что нужно доделать",
     cta: "Перейти в трекер",
     icon: "/assets/icon-tracker.svg",
-    href: "#",
+    href: "/app/tracker",
     enabled: true,
   },
   {
@@ -47,7 +51,15 @@ const featureTiles: FeatureTileData[] = [
   },
 ];
 
-function FeatureTile({ tile, index }: { tile: FeatureTileData; index: number }) {
+function FeatureTile({
+  tile,
+  index,
+  href,
+}: {
+  tile: FeatureTileData;
+  index: number;
+  href?: string;
+}) {
   const content = (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -76,8 +88,8 @@ function FeatureTile({ tile, index }: { tile: FeatureTileData; index: number }) 
     </>
   );
 
-  return tile.enabled && tile.href ? (
-    <Link href={tile.href} className="block rounded-[28px] border border-white/6 bg-[#111111] p-5 md:p-6">
+  return tile.enabled && href ? (
+    <Link href={href} className="block rounded-[28px] border border-white/6 bg-[#111111] p-5 md:p-6">
       {content}
     </Link>
   ) : (
@@ -85,7 +97,9 @@ function FeatureTile({ tile, index }: { tile: FeatureTileData; index: number }) 
   );
 }
 
-export default function AppDashboardPage() {
+export default async function AppDashboardPage() {
+  const user = await getCurrentUser();
+
   return (
     <main className="relative min-h-screen overflow-hidden px-4 py-5 text-white sm:px-6 lg:px-8">
       <div className="noise-layer pointer-events-none absolute inset-0 opacity-50" />
@@ -109,13 +123,13 @@ export default function AppDashboardPage() {
             <span className="heading-font text-[15px] uppercase text-[#78F761]">808 Демок</span>
           </Link>
 
-          <button
-            type="button"
-            aria-label="Войти"
+          <Link
+            href={user ? "/app/profile" : "/auth/sign-in"}
+            aria-label={user ? "Профиль" : "Войти"}
             className="flex size-12 items-center justify-center rounded-full bg-[#1E1E1E] transition hover:bg-[#303030] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#78F761]"
           >
-            <Image src="/assets/login.svg" alt="" width={24} height={24} />
-          </button>
+            <Image src={user ? "/assets/profile.svg" : "/assets/login.svg"} alt="" width={24} height={24} />
+          </Link>
         </header>
 
         <section className="mt-10 rounded-[30px] border border-white/6 bg-[#111111]/92 p-5 shadow-2xl backdrop-blur md:p-8">
@@ -150,9 +164,11 @@ export default function AppDashboardPage() {
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">
-          {featureTiles.map((tile, index) => (
-            <FeatureTile key={tile.title} tile={tile} index={index} />
-          ))}
+          {featureTiles.map((tile, index) => {
+            const href = tile.href === "/app/tracker" && !user ? "/auth/sign-in" : tile.href;
+
+            return <FeatureTile key={tile.title} tile={tile} index={index} href={href} />;
+          })}
         </section>
       </div>
     </main>

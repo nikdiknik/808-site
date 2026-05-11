@@ -22,7 +22,11 @@ OPENAI_MODEL=gpt-4.1-mini
 METHODS_TSV_PATH=data/methods.tsv
 CHECKLIST_FILE_PATH=public/checklist-808.png
 ANALYTICS_PATH=data/analytics.json
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
+
+`NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` нужны для Magic Link входа через Supabase Auth.
 
 Для Railway с Volume:
 
@@ -36,8 +40,10 @@ RAILWAY_VOLUME_MOUNT_PATH=/data
 
 1. Подключить GitHub repo к Railway.
 2. Добавить `OPENAI_API_KEY` в Variables.
-3. Подключить Volume с mount path `/data`.
-4. Railway выполнит `npm run build` и запустит production-сервер.
+3. Добавить `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+4. В Supabase Auth URL Configuration добавить callback URL: `https://<railway-domain>/auth/callback`.
+5. Подключить Volume с mount path `/data`.
+6. Railway выполнит `npm run build` и запустит production-сервер.
 
 Production-start явно слушает `0.0.0.0` и порт из `PORT`, который Railway передаёт контейнеру. Если `PORT` не задан, локальный `npm run start` использует `3000`.
 
