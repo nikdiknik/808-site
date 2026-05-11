@@ -1,5 +1,5 @@
-import { RestartFlow } from "@/components/restart-flow";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return <RestartFlow />;
+  redirect("/app");
 }
