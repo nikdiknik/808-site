@@ -27,7 +27,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 
-`NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` нужны для Magic Link входа через Supabase Auth.
+`NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` нужны серверу для Magic Link входа через Supabase Auth.
 `NEXT_PUBLIC_SITE_URL` фиксирует публичный домен для magic link redirect в production, например `https://808-demos.up.railway.app`. Локально можно оставить пустым, тогда будет использован `http://localhost:3000`.
 
 Для Railway с Volume:
@@ -43,11 +43,23 @@ RAILWAY_VOLUME_MOUNT_PATH=/data
 1. Подключить GitHub repo к Railway.
 2. Добавить `OPENAI_API_KEY` в Variables.
 3. Добавить `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-4. В Supabase Auth URL Configuration добавить callback URL: `https://<railway-domain>/auth/callback`.
+4. В Supabase Auth URL Configuration добавить callback URL: `https://<railway-domain>/auth/confirm`.
 5. Подключить Volume с mount path `/data`.
 6. Railway выполнит `npm run build` и запустит production-сервер.
 
 Production-start явно слушает `0.0.0.0` и порт из `PORT`, который Railway передаёт контейнеру. Если `PORT` не задан, локальный `npm run start` использует `3000`.
+
+## Supabase Auth
+
+Чтобы пользователи из сетей, где `*.supabase.co` недоступен, могли войти без VPN, браузер обращается только к сайту на Railway. Форма входа отправляет email в `/api/auth/magic-link`, а письмо должно вести на `/auth/confirm`.
+
+В Supabase Auth Email Template для Magic Link используй ссылку:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Войти в 808 Демок</a>
+```
+
+Не используй `{{ .ConfirmationURL }}` для основного потока: такая ссылка ведёт через Supabase-домен.
 
 ## Данные
 

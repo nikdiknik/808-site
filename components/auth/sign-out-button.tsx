@@ -3,17 +3,11 @@
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-
 export function SignOutButton() {
   const router = useRouter();
 
   async function signOut() {
-    if (isSupabaseConfigured()) {
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut();
-    }
+    await fetch("/api/auth/sign-out", { method: "POST" });
 
     router.push("/app");
     router.refresh();

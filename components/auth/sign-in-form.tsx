@@ -3,9 +3,6 @@
 import { FormEvent, useState } from "react";
 import { Loader2, Mail } from "lucide-react";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { getPublicSiteUrl, isSupabaseConfigured } from "@/lib/supabase/config";
-
 export function SignInForm({ initialError }: { initialError?: string }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState(initialError || "");
@@ -17,26 +14,21 @@ export function SignInForm({ initialError }: { initialError?: string }) {
     setError("");
     setIsSent(false);
 
-    if (!isSupabaseConfigured()) {
-      setError("Supabase ещё не настроен. Добавь NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const supabase = createSupabaseBrowserClient();
-      const siteUrl = getPublicSiteUrl(window.location.origin);
-      const { error: signInError } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${siteUrl}/auth/callback`,
+      const response = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email: email.trim() }),
       });
 
-      if (signInError) {
-        setError(signInError.message);
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        setError(result.error || "Не получилось отправить ссылку");
         return;
       }
 
