@@ -11,6 +11,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -113,35 +114,49 @@ export function SignInForm({ initialError }: { initialError?: string }) {
         </p>
       ) : null}
 
-      <form onSubmit={submitAdmin} className="mt-6 rounded-[24px] border border-white/6 bg-[#111111] p-4">
-        <p className="heading-font text-[12px] uppercase text-[#78F761]">admin</p>
-        <div className="mt-4 grid gap-3">
-          <input
-            type="text"
-            required
-            value={adminLogin}
-            onChange={(event) => setAdminLogin(event.target.value)}
-            placeholder="login"
-            className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
-          />
-          <input
-            type="password"
-            required
-            value={adminPassword}
-            onChange={(event) => setAdminPassword(event.target.value)}
-            placeholder="password"
-            className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
-          />
-        </div>
+      {isAdminOpen ? (
+        <form onSubmit={submitAdmin} className="mt-3 rounded-[24px] border border-white/6 bg-[#111111] p-4">
+          <div className="grid gap-3">
+            <input
+              type="text"
+              required
+              value={adminLogin}
+              onChange={(event) => setAdminLogin(event.target.value)}
+              placeholder="Логин"
+              className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
+            />
+            <input
+              type="password"
+              required
+              value={adminPassword}
+              onChange={(event) => setAdminPassword(event.target.value)}
+              placeholder="Пароль"
+              className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isAdminLoading}
+            className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isAdminLoading ? <Loader2 size={18} className="animate-spin" /> : <KeyRound size={18} />}
+            {isAdminLoading ? "Входим" : "Войти по логину"}
+          </button>
+        </form>
+      ) : (
         <button
-          type="submit"
-          disabled={isAdminLoading}
-          className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D] disabled:cursor-not-allowed disabled:opacity-40"
+          type="button"
+          onClick={() => {
+            setError("");
+            setIsSent(false);
+            setIsAdminOpen(true);
+          }}
+          className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
         >
-          {isAdminLoading ? <Loader2 size={18} className="animate-spin" /> : <KeyRound size={18} />}
-          {isAdminLoading ? "Входим" : "Войти как админ"}
+          <KeyRound size={18} />
+          Войти по логину
         </button>
-      </form>
+      )}
     </div>
   );
 }
