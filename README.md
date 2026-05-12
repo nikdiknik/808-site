@@ -22,6 +22,8 @@ OPENAI_MODEL=gpt-4.1-mini
 METHODS_TSV_PATH=data/methods.tsv
 CHECKLIST_FILE_PATH=public/checklist-808.png
 ANALYTICS_PATH=data/analytics.json
+ADMIN_LOGIN=
+ADMIN_PASSWORD=
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
@@ -52,6 +54,8 @@ Production-start явно слушает `0.0.0.0` и порт из `PORT`, ко
 ## Supabase Auth
 
 Чтобы пользователи из сетей, где `*.supabase.co` недоступен, могли войти без VPN, браузер обращается только к сайту на Railway. Форма входа отправляет email в `/api/auth/magic-link`, а письмо должно вести на `/auth/confirm`.
+
+Для админского доступа в MVP есть локальная cookie-сессия через `/api/auth/admin-login`. Она не создаёт пользователя в Supabase и нужна только для ручной проверки закрытых разделов. Логин и пароль задаются через `ADMIN_LOGIN` и `ADMIN_PASSWORD`.
 
 В Supabase Auth Email Template для Magic Link используй ссылку:
 

@@ -3,6 +3,42 @@ import { createServerClient } from "@supabase/ssr";
 
 import { getSupabaseBrowserConfig, isSupabaseConfigured } from "@/lib/supabase/config";
 
+const adminSessionCookie = "admin_session";
+const adminSessionValue = "808-admin";
+
+export type AppUser = {
+  email?: string;
+  role?: string;
+};
+
+export async function createAdminSession() {
+  const cookieStore = await cookies();
+  cookieStore.set(adminSessionCookie, adminSessionValue, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+}
+
+export async function clearAdminSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(adminSessionCookie);
+}
+
+async function getAdminUser(): Promise<AppUser | null> {
+  const cookieStore = await cookies();
+  const session = cookieStore.get(adminSessionCookie)?.value;
+
+  if (session !== adminSessionValue) return null;
+
+  return {
+    email: "admin",
+    role: "admin",
+  };
+}
+
 export async function createSupabaseServerClient() {
   if (!isSupabaseConfigured()) return null;
 
@@ -28,6 +64,9 @@ export async function createSupabaseServerClient() {
 }
 
 export async function getCurrentUser() {
+  const adminUser = await getAdminUser();
+  if (adminUser) return adminUser;
+
   const supabase = await createSupabaseServerClient();
   if (!supabase) return null;
 
