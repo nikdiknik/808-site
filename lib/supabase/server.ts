@@ -7,8 +7,9 @@ const adminSessionCookie = "admin_session";
 const adminSessionValue = "808-admin";
 
 export type AppUser = {
-  email?: string;
-  role?: string;
+  id: string;
+  email: string;
+  role: "admin" | "user";
 };
 
 export async function createAdminSession() {
@@ -34,6 +35,7 @@ async function getAdminUser(): Promise<AppUser | null> {
   if (session !== adminSessionValue) return null;
 
   return {
+    id: "admin",
     email: "admin",
     role: "admin",
   };
@@ -63,7 +65,7 @@ export async function createSupabaseServerClient() {
   });
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<AppUser | null> {
   const adminUser = await getAdminUser();
   if (adminUser) return adminUser;
 
@@ -74,5 +76,11 @@ export async function getCurrentUser() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return user;
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    email: user.email || "",
+    role: "user",
+  };
 }

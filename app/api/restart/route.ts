@@ -5,6 +5,8 @@ import { recordAnalyticsEvent } from "@/lib/analytics";
 import { readMethodsText } from "@/lib/methods";
 import { generateRestartScenario } from "@/lib/openai";
 import { restartRequestSchema } from "@/lib/schemas";
+import { getCurrentUser } from "@/lib/supabase/server";
+import { incrementUserRestartCount } from "@/lib/users";
 
 export const runtime = "nodejs";
 
@@ -37,6 +39,10 @@ export async function POST(request: Request) {
       experience: parsed.experience,
       problem: parsed.problem,
     });
+    const user = await getCurrentUser();
+    if (user) {
+      await incrementUserRestartCount(user);
+    }
     return NextResponse.json(result);
   } catch (error) {
     await recordAnalyticsEvent("failed", {
