@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { Loader2, Mail } from "lucide-react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getPublicSiteUrl, isSupabaseConfigured } from "@/lib/supabase/config";
 
 export function SignInForm({ initialError }: { initialError?: string }) {
   const [email, setEmail] = useState("");
@@ -26,11 +26,12 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 
     try {
       const supabase = createSupabaseBrowserClient();
+      const siteUrl = getPublicSiteUrl(window.location.origin);
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${siteUrl}/auth/callback`,
         },
       });
 

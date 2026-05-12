@@ -5,6 +5,15 @@ export function getSupabaseBrowserConfig() {
   };
 }
 
+export function normalizeSiteUrl(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
+export function getPublicSiteUrl(fallbackUrl = "") {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || fallbackUrl;
+  return siteUrl ? normalizeSiteUrl(siteUrl) : "";
+}
+
 export function isSupabaseConfigured() {
   const { url, anonKey } = getSupabaseBrowserConfig();
   return Boolean(url && anonKey);
