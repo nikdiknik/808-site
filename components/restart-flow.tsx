@@ -213,7 +213,7 @@ function ResultCard({
 
 export function RestartFlow({ initialExperience = null, tracks = [] }: RestartFlowProps) {
   const [experience, setExperience] = useState<ExperienceId | null>(initialExperience);
-  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(tracks.length ? null : "other");
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [problem, setProblem] = useState<ProblemId | null>(null);
   const [otherText, setOtherText] = useState("");
   const [result, setResult] = useState<RestartResult | null>(null);
@@ -290,7 +290,7 @@ export function RestartFlow({ initialExperience = null, tracks = [] }: RestartFl
 
   function resetFlow() {
     setExperience(initialExperience);
-    setSelectedTrackId(tracks.length ? null : "other");
+    setSelectedTrackId(null);
     setProblem(null);
     setOtherText("");
     setResult(null);
@@ -419,12 +419,19 @@ export function RestartFlow({ initialExperience = null, tracks = [] }: RestartFl
                   />
                 </div>
               ) : (
-                <div className="mt-4 rounded-[22px] border border-dashed border-white/10 bg-[#1E1E1E] p-4">
+                <div
+                  className={clsx(
+                    "mt-4 rounded-[22px] border border-dashed p-4 transition",
+                    selectedTrackId === "other" ? "border-[#78F761]/70 bg-[#78F761]/10" : "border-white/10 bg-[#1E1E1E]",
+                  )}
+                >
                   <p className="text-[16px] font-bold text-white">В трекере пока нет демок</p>
-                  <p className="mt-2 text-[14px] leading-snug text-[#A5A5A5]">Можно добавить демку или разобрать другой проект</p>
+                  <p className="mt-2 text-[14px] leading-snug text-[#A5A5A5]">
+                    {selectedTrackId === "other" ? "Ок, разберём демку без привязки к трекеру" : "Можно добавить демку или разобрать другой проект"}
+                  </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <PillButton variant="secondary" onClick={() => setSelectedTrackId("other")}>
-                      Другая демка
+                    <PillButton variant={selectedTrackId === "other" ? "primary" : "secondary"} onClick={() => setSelectedTrackId("other")}>
+                      Пропустить
                     </PillButton>
                     <PillButton onClick={() => setAddDemoOpen(true)}>
                       Добавить демку
