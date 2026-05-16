@@ -123,6 +123,22 @@ export async function updateUserProfile(user: AppUser, update: z.infer<typeof pr
   return nextProfile;
 }
 
+export async function addUserDemo(user: AppUser, trackId: string): Promise<void> {
+  const data = await loadUsers();
+  const profile = data.users[user.id] || createDefaultProfile(user);
+  profile.demos = Array.from(new Set([...profile.demos, trackId]));
+  data.users[user.id] = profile;
+  await saveUsers(data);
+}
+
+export async function removeUserDemo(user: AppUser, trackId: string): Promise<void> {
+  const data = await loadUsers();
+  const profile = data.users[user.id] || createDefaultProfile(user);
+  profile.demos = profile.demos.filter((demoId) => demoId !== trackId);
+  data.users[user.id] = profile;
+  await saveUsers(data);
+}
+
 export async function incrementUserRestartCount(user: AppUser): Promise<void> {
   try {
     const data = await loadUsers();

@@ -23,6 +23,7 @@ METHODS_TSV_PATH=data/methods.tsv
 CHECKLIST_FILE_PATH=public/checklist-808.png
 ANALYTICS_PATH=data/analytics.json
 USERS_PATH=data/users.json
+TRACKS_PATH=data/tracks.json
 ADMIN_LOGIN=
 ADMIN_PASSWORD=
 NEXT_PUBLIC_SITE_URL=
@@ -40,7 +41,7 @@ RAILWAY_VOLUME_MOUNT_PATH=/data
 ```
 
 `RAILWAY_VOLUME_MOUNT_PATH` Railway добавляет автоматически, когда Volume attached к сервису. Если эта переменная есть, сайт сам пишет аналитику в `${RAILWAY_VOLUME_MOUNT_PATH}/analytics.json`. `ANALYTICS_PATH` можно не задавать. Если обе переменные заданы, Railway Volume имеет приоритет.
-Профили пользователей пишутся в `${RAILWAY_VOLUME_MOUNT_PATH}/users.json`. Локально используется `USERS_PATH` или `data/users.json`.
+Профили пользователей пишутся в `${RAILWAY_VOLUME_MOUNT_PATH}/users.json`. Треки пишутся в `${RAILWAY_VOLUME_MOUNT_PATH}/tracks.json`. Локально используются `USERS_PATH` / `TRACKS_PATH` или `data/users.json` / `data/tracks.json`.
 
 ## Railway deploy
 
@@ -72,4 +73,5 @@ Production-start явно слушает `0.0.0.0` и порт из `PORT`, ко
 - Методики: `data/methods.tsv`
 - Чек-лист: `public/checklist-808.png`
 - Профили пользователей: `data/users.json` локально или `${RAILWAY_VOLUME_MOUNT_PATH}/users.json` на Railway
+- Демки пользователей: `data/tracks.json` локально или `${RAILWAY_VOLUME_MOUNT_PATH}/tracks.json` на Railway
 - Шрифты PT Root UI: `public/fonts/`

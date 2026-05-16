@@ -6,7 +6,7 @@ import { readMethodsText } from "@/lib/methods";
 import { generateRestartScenario } from "@/lib/openai";
 import { restartRequestSchema } from "@/lib/schemas";
 import { getCurrentUser } from "@/lib/supabase/server";
-import { incrementUserRestartCount } from "@/lib/users";
+import { ensureUserProfile, incrementUserRestartCount } from "@/lib/users";
 
 export const runtime = "nodejs";
 
@@ -33,13 +33,24 @@ export async function POST(request: Request) {
   });
 
   try {
+    const user = await getCurrentUser();
+    if (user) {
+      const profile = await ensureUserProfile(user);
+      if (!profile.isPremium && profile.restartCount >= 2) {
+        return errorResponse(
+          "Premium откроет больше попыток перезапуститься и расширенные методики",
+          402,
+          "RESTART_LIMIT_REACHED",
+        );
+      }
+    }
+
     const methodsText = await readMethodsText();
     const result = await generateRestartScenario(parsed, methodsText);
     await recordAnalyticsEvent("completed", {
       experience: parsed.experience,
       problem: parsed.problem,
     });
-    const user = await getCurrentUser();
     if (user) {
       await incrementUserRestartCount(user);
     }

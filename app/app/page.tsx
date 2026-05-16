@@ -22,7 +22,7 @@ const featureTiles: FeatureTileData[] = [
     description: "Следи за всеми треками в одном месте: что уже готово, где залип и что нужно доделать",
     cta: "Перейти в трекер",
     icon: "/assets/icon-tracker.svg",
-    href: "/app/tracker",
+    href: "/app/tracks",
     enabled: true,
   },
   {
@@ -165,7 +165,7 @@ export default async function AppDashboardPage() {
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">
           {featureTiles.map((tile, index) => {
-            const href = tile.href === "/app/tracker" && !user ? "/auth/sign-in" : tile.href;
+            const href = tile.href === "/app/tracks" && !user ? "/auth/sign-in" : tile.href;
 
             return <FeatureTile key={tile.title} tile={tile} index={index} href={href} />;
           })}

@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { ArrowDownToLine, Loader2, Lock, RotateCcw, Sparkles, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowDownToLine, ArrowLeft, Loader2, Lock, RotateCcw } from "lucide-react";
 import clsx from "clsx";
 
+import { PremiumLimitModal } from "@/components/premium/premium-limit-modal";
+import { CoverArt } from "@/components/tracks/cover-art";
 import { experienceOptions, problemOptions, type ExperienceId, type ProblemId } from "@/lib/options";
+import type { CoverId } from "@/lib/track-options";
 import type { RestartResult } from "@/lib/schemas";
 
 type ApiError = {
@@ -15,12 +19,39 @@ type ApiError = {
   };
 };
 
+type RestartTrackOption = {
+  id: string;
+  title: string;
+  subtitle: string;
+  notes: string;
+  coverId: CoverId;
+  progressPercent: number;
+};
+
+type RestartFlowProps = {
+  initialExperience?: ExperienceId | null;
+  tracks?: RestartTrackOption[];
+};
+
 const loadingLines = [
   "Слушаю, где трек заклинило",
   "Кручу ручки креативного синта",
   "Ищу методику без советов уровня «просто вдохновись»",
   "Снимаю пыль с зависшей демки",
 ];
+
+function StarsIcon({ className = "size-5" }: { className?: string }) {
+  return (
+    <span
+      className={clsx("inline-block shrink-0 bg-current", className)}
+      style={{
+        mask: "url('/assets/stars.svg') center / contain no-repeat",
+        WebkitMask: "url('/assets/stars.svg') center / contain no-repeat",
+      }}
+      aria-hidden="true"
+    />
+  );
+}
 
 function PillButton({
   children,
@@ -109,6 +140,52 @@ function ChoiceCard({
   );
 }
 
+function TrackChoiceCard({
+  selected,
+  title,
+  meta,
+  coverId,
+  progressPercent,
+  onSelect,
+}: {
+  selected: boolean;
+  title: string;
+  meta: string;
+  coverId?: CoverId;
+  progressPercent?: number;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onSelect}
+      className={clsx(
+        "group flex min-h-[86px] w-full items-center gap-3 rounded-[22px] border py-3 pl-3 pr-6 text-left transition duration-200 active:scale-[0.99]",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#78F761]",
+        selected
+          ? "border-[#78F761] bg-[#78F761] text-[#0A0A0A] shadow-[0_0_0_1px_rgba(120,247,97,0.2),0_18px_50px_rgba(120,247,97,0.12)]"
+          : "border-white/5 bg-[#303030] text-white hover:border-white/12 hover:bg-[#3D3D3D]",
+      )}
+    >
+      {coverId ? (
+        <CoverArt coverId={coverId} className="size-14 shrink-0 rounded-[16px]" />
+      ) : (
+        <span className={clsx("flex size-14 shrink-0 items-center justify-center rounded-[16px]", selected ? "bg-[#0A0A0A]/15" : "bg-[#1E1E1E]")}>
+          <StarsIcon className="size-5" />
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[16px] font-bold leading-tight">{title}</span>
+        <span className={clsx("mt-1 block line-clamp-1 text-[13px]", selected ? "text-black/65" : "text-[#A5A5A5]")}>{meta}</span>
+      </span>
+      {typeof progressPercent === "number" ? (
+        <span className="heading-font shrink-0 text-[15px]">{progressPercent}%</span>
+      ) : null}
+    </button>
+  );
+}
+
 function ResultCard({
   eyebrow,
   title,
@@ -134,39 +211,9 @@ function ResultCard({
   );
 }
 
-function PremiumModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:justify-center">
-      <div className="w-full max-w-[460px] rounded-[28px] border border-white/8 bg-[#1E1E1E] p-5 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="heading-font text-[12px] uppercase text-[#78F761]">Premium</p>
-            <h2 className="heading-font mt-3 text-[26px] leading-tight">Разблокируй полный перезапуск</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#303030] text-white"
-            aria-label="Закрыть"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        <p className="mt-5 text-[17px] leading-relaxed text-[#C9C9C9]">
-          Premium откроет все методики, расширенный трекер прогресса, генератор идей и сохранение результатов
-          по треку
-        </p>
-        <PillButton className="mt-6 w-full">
-          <Lock size={18} />
-          Premium за 119 ₽
-        </PillButton>
-      </div>
-    </div>
-  );
-}
-
-export function RestartFlow() {
-  const [experience, setExperience] = useState<ExperienceId | null>(null);
+export function RestartFlow({ initialExperience = null, tracks = [] }: RestartFlowProps) {
+  const [experience, setExperience] = useState<ExperienceId | null>(initialExperience);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(tracks.length ? null : "other");
   const [problem, setProblem] = useState<ProblemId | null>(null);
   const [otherText, setOtherText] = useState("");
   const [result, setResult] = useState<RestartResult | null>(null);
@@ -174,9 +221,10 @@ export function RestartFlow() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [premiumOpen, setPremiumOpen] = useState(false);
+  const [addDemoOpen, setAddDemoOpen] = useState(false);
   const [checklistError, setChecklistError] = useState<string | null>(null);
 
-  const canSubmit = Boolean(experience && problem && (problem !== "other" || otherText.trim()));
+  const canSubmit = Boolean(experience && selectedTrackId && problem && (problem !== "other" || otherText.trim()));
 
   const selectedProblemLabel = useMemo(() => {
     if (!problem) return "ступор ещё не выбран";
@@ -225,6 +273,10 @@ export function RestartFlow() {
 
       const data = (await response.json()) as RestartResult | ApiError;
       if (!response.ok) {
+        if ("error" in data && data.error?.code === "RESTART_LIMIT_REACHED") {
+          setPremiumOpen(true);
+          return;
+        }
         throw new Error("error" in data ? data.error?.message : "Не получилось подобрать перезапуск");
       }
 
@@ -237,7 +289,8 @@ export function RestartFlow() {
   }
 
   function resetFlow() {
-    setExperience(null);
+    setExperience(initialExperience);
+    setSelectedTrackId(tracks.length ? null : "other");
     setProblem(null);
     setOtherText("");
     setResult(null);
@@ -281,14 +334,21 @@ export function RestartFlow() {
       <div className="relative mx-auto grid min-h-screen w-full max-w-[1180px] items-start gap-6 py-4 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="relative overflow-hidden rounded-[30px] border border-white/6 bg-[#0A0A0A] p-5 md:min-h-[560px] lg:sticky lg:top-6">
           <div className="relative z-10">
-            <div className="heading-font inline-flex rounded-full bg-[#303030] px-4 py-2 text-[12px] uppercase text-[#78F761]">
-              808 Демок
+            <div className="flex items-center gap-3">
+              <Link
+                href="/app"
+                aria-label="Назад"
+                className="flex size-11 items-center justify-center rounded-full bg-[#1E1E1E] text-[#78F761] transition hover:bg-[#303030]"
+              >
+                <ArrowLeft size={20} />
+              </Link>
+              <p className="heading-font text-[12px] uppercase text-[#78F761]">Restart flow</p>
             </div>
             <h1 className="heading-font mt-5 max-w-[680px] text-[34px] leading-[1.08] sm:text-[44px] lg:text-[54px]">
               Подобрать сценарий перезапуска
             </h1>
             <p className="mt-5 max-w-[520px] text-[18px] leading-relaxed text-[#C9C9C9]">
-              Для демки, которая вроде живая, но уже третий вечер смотрит на тебя из DAW без движения
+              Выбери демку из трекера или другой проект, отметь свой опыт и место, где трек застрял
             </p>
           </div>
 
@@ -314,7 +374,7 @@ export function RestartFlow() {
           <div className="rounded-[28px] bg-[#1E1E1E] p-4 md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="heading-font text-[12px] uppercase text-[#78F761]">restart flow</p>
+                <p className="heading-font text-[12px] uppercase text-[#78F761]">inputs</p>
                 <h2 className="heading-font mt-2 text-[26px] leading-tight md:text-[34px]">Где трек завис?</h2>
               </div>
               <div className="rounded-full bg-[#303030] px-4 py-2 text-[14px] text-[#C9C9C9]">{selectedProblemLabel}</div>
@@ -337,7 +397,45 @@ export function RestartFlow() {
             </div>
 
             <div className="mt-4 rounded-[24px] bg-[#303030] p-4">
-              <p className="heading-font text-[13px] uppercase text-[#78F761]">02 / ступор</p>
+              <p className="heading-font text-[13px] uppercase text-[#78F761]">02 / демка</p>
+              {tracks.length ? (
+                <div className="mt-4 grid gap-3">
+                  {tracks.map((track) => (
+                    <TrackChoiceCard
+                      key={track.id}
+                      selected={selectedTrackId === track.id}
+                      title={track.title}
+                      meta={track.subtitle || track.notes || "Демка из трекера"}
+                      coverId={track.coverId}
+                      progressPercent={track.progressPercent}
+                      onSelect={() => setSelectedTrackId(track.id)}
+                    />
+                  ))}
+                  <TrackChoiceCard
+                    selected={selectedTrackId === "other"}
+                    title="Другая демка"
+                    meta="проект не из трекера"
+                    onSelect={() => setSelectedTrackId("other")}
+                  />
+                </div>
+              ) : (
+                <div className="mt-4 rounded-[22px] border border-dashed border-white/10 bg-[#1E1E1E] p-4">
+                  <p className="text-[16px] font-bold text-white">В трекере пока нет демок</p>
+                  <p className="mt-2 text-[14px] leading-snug text-[#A5A5A5]">Можно добавить демку или разобрать другой проект</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <PillButton variant="secondary" onClick={() => setSelectedTrackId("other")}>
+                      Другая демка
+                    </PillButton>
+                    <PillButton onClick={() => setAddDemoOpen(true)}>
+                      Добавить демку
+                    </PillButton>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 rounded-[24px] bg-[#303030] p-4">
+              <p className="heading-font text-[13px] uppercase text-[#78F761]">03 / ступор</p>
               <div className="mt-4 grid gap-3">
                 {problemOptions.map((option) => (
                   <ChoiceCard
@@ -362,8 +460,8 @@ export function RestartFlow() {
 
             {!result && !isLoading ? (
               <div className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-[#0F0F0F] p-4 text-[15px] leading-relaxed text-[#838383]">
-                Выбери свой опыт в музыке и этап, на котором застрял трек. Мы разберём ситуацию, подберём технику
-                перезапуска и дадим советы, что делать дальше
+                Выбери опыт, демку и этап ступора. Мы разберём контекст, подберём технику перезапуска и дадим советы,
+                что делать дальше
               </div>
             ) : null}
 
@@ -374,7 +472,7 @@ export function RestartFlow() {
             ) : null}
 
             <PillButton className="mt-5 w-full" disabled={!canSubmit || isLoading} onClick={submitFlow}>
-              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <StarsIcon className="size-[18px]" />}
               {isLoading ? loadingLines[loadingIndex] : "Подобрать перезапуск"}
             </PillButton>
           </div>
@@ -445,7 +543,34 @@ export function RestartFlow() {
         </section>
       </div>
 
-      {premiumOpen ? <PremiumModal onClose={() => setPremiumOpen(false)} /> : null}
+      {addDemoOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-[460px] rounded-[30px] border border-white/8 bg-[#1E1E1E] p-5 shadow-2xl">
+            <p className="heading-font text-[12px] uppercase text-[#78F761]">tracks</p>
+            <h2 className="mt-3 text-[28px] font-bold leading-tight text-white">Добавить демку?</h2>
+            <p className="mt-3 text-[16px] leading-snug text-[#A5A5A5]">
+              Создание откроется в трекере. После добавления можно вернуться сюда и подобрать перезапуск уже для этой демки
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/app/tracks/new"
+                className="flex min-h-[54px] items-center justify-center rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110"
+              >
+                Добавить демку
+              </Link>
+              <button
+                type="button"
+                onClick={() => setAddDemoOpen(false)}
+                className="flex min-h-[54px] items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {premiumOpen ? <PremiumLimitModal variant="restarts" onClose={() => setPremiumOpen(false)} /> : null}
     </main>
   );
 }
