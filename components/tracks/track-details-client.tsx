@@ -33,6 +33,15 @@ function textOrEmpty(value: string, fallback: string) {
   return value.trim() || fallback;
 }
 
+function formatUpdatedAt(value: string) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 function PencilIcon() {
   return <Image src="/assets/edit.svg" alt="" width={18} height={18} />;
 }
@@ -109,6 +118,18 @@ function makeStructureItem(title: string) {
   };
 }
 
+function getStatusAvailability(progressSections: TrackProgressSection[]) {
+  const structureDone = progressSections.some((section) => section.id === "structure" && section.isDone);
+  const preMixSectionsDone = progressSections
+    .filter((section) => section.id !== "mixing_mastering")
+    .every((section) => section.isSkipped || section.isDone);
+  const mixingStarted = progressSections
+    .find((section) => section.id === "mixing_mastering")
+    ?.items.some((item) => item.isDone) || false;
+
+  return { structureDone, preMixSectionsDone, mixingStarted };
+}
+
 export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
   const router = useRouter();
   const initialTrack = { ...track, progressSections: normalizeProgressSections(track.progressSections) };
@@ -130,6 +151,21 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [savingProgressKey, setSavingProgressKey] = useState("");
   const [error, setError] = useState("");
+  const statusAvailability = getStatusAvailability(progressSections);
+
+  function isStatusDisabled(option: Track["status"]) {
+    if (option === "arrangement") return !statusAvailability.structureDone;
+    if (option === "recording") return !statusAvailability.preMixSectionsDone;
+    if (option === "mixing") return true;
+    return false;
+  }
+
+  function getStatusHint(option: Track["status"]) {
+    if (option === "arrangement" && !statusAvailability.structureDone) return "Сначала собери структуру";
+    if (option === "recording" && !statusAvailability.preMixSectionsDone) return "Сначала закрой этапы до сведения";
+    if (option === "mixing") return "Включится автоматически, когда начнёшь сведение";
+    return "";
+  }
 
   function syncTrack(nextTrack: Track) {
     const normalizedTrack = { ...nextTrack, progressSections: normalizeProgressSections(nextTrack.progressSections) };
@@ -451,32 +487,44 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
         <div className="mt-5 grid grid-cols-5 gap-2">
           {trackStatuses.map((option) => {
             const selected = status === option;
+            const locked = isStatusDisabled(option);
             return (
               <button
                 key={option}
                 type={isEditing ? "button" : "button"}
-                disabled={!isEditing}
-                onClick={() => setStatus(option)}
+                disabled={!isEditing || locked}
+                onClick={() => {
+                  if (locked) return;
+                  setStatus(option);
+                }}
+                title={getStatusHint(option)}
                 className="flex flex-col items-center gap-2 text-center disabled:cursor-default"
               >
                 <span
                   className={clsx(
-                    "size-12 rounded-full border border-white/8 transition",
+                    "size-12 rounded-full border transition",
                     selected ? "bg-[#78F761] shadow-[0_0_20px_rgba(120,247,97,0.25)]" : "bg-[#303030]",
+                    locked ? "border-dashed border-white/12 opacity-35" : "border-white/8",
                   )}
                 />
-                <span className={clsx("text-[12px]", selected ? "text-white" : "text-[#838383]")}>{trackStatusLabels[option]}</span>
+                <span className={clsx("text-[12px]", selected ? "text-white" : "text-[#838383]", locked && "opacity-45")}>
+                  {trackStatusLabels[option]}
+                </span>
               </button>
             );
           })}
         </div>
       </section>
 
-      <div className="mt-5 rounded-[26px] bg-[#1E1E1E] p-5">
-        <p className="heading-font text-[12px] uppercase text-[#78F761]">progress</p>
+      <div id="track-progress" className="mt-5 scroll-mt-8 rounded-[26px] bg-[#1E1E1E] p-5">
+        <p className="heading-font text-[12px] uppercase text-[#78F761]">прогресс</p>
         <div className="mt-4 flex items-end justify-between gap-4">
           <span className="heading-font text-[56px] leading-none text-white">{savedTrack.progressPercent}%</span>
-          <span className="text-[16px] text-[#838383]">Отмечай этапы ниже</span>
+          <span className="text-right text-[16px] leading-snug text-[#838383]">
+            Отмечай этапы ниже
+            <br />
+            Обновлено {formatUpdatedAt(savedTrack.updatedAt)}
+          </span>
         </div>
         <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#303030]">
           <div className="h-full rounded-full bg-[#78F761]" style={{ width: `${savedTrack.progressPercent}%` }} />
@@ -716,6 +764,15 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
             </article>
             )
           ))}
+        </div>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={() => document.getElementById("track-progress")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+            className="flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D] sm:w-auto"
+          >
+            Перейти к прогрессу
+          </button>
         </div>
       </section>
 

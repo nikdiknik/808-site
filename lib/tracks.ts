@@ -245,6 +245,29 @@ function normalizeProgressSections(sections: TrackProgressSection[]): TrackProgr
   });
 }
 
+function getStatusAvailability(progressSections: TrackProgressSection[]) {
+  const structureDone = progressSections.some((section) => section.id === "structure" && section.isDone);
+  const preMixSectionsDone = progressSections
+    .filter((section) => section.id !== "mixing_mastering")
+    .every((section) => section.isSkipped || section.isDone);
+  const mixingStarted = progressSections
+    .find((section) => section.id === "mixing_mastering")
+    ?.items.some((item) => item.isDone) || false;
+
+  return { structureDone, preMixSectionsDone, mixingStarted };
+}
+
+function normalizeTrackStatus(status: TrackStatus, progressSections: TrackProgressSection[]): TrackStatus {
+  const { structureDone, preMixSectionsDone, mixingStarted } = getStatusAvailability(progressSections);
+
+  if (preMixSectionsDone && mixingStarted) return "mixing";
+  if (!structureDone && ["arrangement", "recording", "mixing"].includes(status)) return "demo";
+  if (!preMixSectionsDone && ["recording", "mixing"].includes(status)) return structureDone ? "arrangement" : "demo";
+  if (status === "mixing" && !mixingStarted) return "recording";
+
+  return status;
+}
+
 export function recalculateTrackProgress(track: Track): Track {
   const progressSections = normalizeProgressSections(track.progressSections).map((section) => {
     if (section.id === "vocal") {
@@ -281,7 +304,8 @@ export function recalculateTrackProgress(track: Track): Track {
     .flatMap((section) => (section.id === "structure" ? [{ isDone: section.isDone }] : [...section.items, ...(section.structureItems || [])]));
   const doneUnits = progressUnits.filter((item) => item.isDone);
   const progressPercent = progressUnits.length ? Math.round((doneUnits.length / progressUnits.length) * 100) : 0;
-  return { ...track, progressSections, progressPercent };
+  const status = normalizeTrackStatus(track.status, progressSections);
+  return { ...track, status, progressSections, progressPercent };
 }
 
 export async function getUserTracks(user: AppUser): Promise<Track[]> {
@@ -308,6 +332,7 @@ export async function createUserTrack(user: AppUser, payload: z.infer<typeof cre
 
   const data = await loadTracks();
   const now = new Date().toISOString();
+  const initialStatus = payload.status === "demo" ? "demo" : "idea";
   const track: Track = recalculateTrackProgress({
     id: randomUUID(),
     userId: user.id,
@@ -316,7 +341,7 @@ export async function createUserTrack(user: AppUser, payload: z.infer<typeof cre
     notes: payload.notes || "",
     type: payload.type,
     instruments: payload.instruments,
-    status: payload.status,
+    status: initialStatus,
     coverId: payload.coverId,
     progressPercent: 0,
     progressSections: createDefaultProgressSections(),

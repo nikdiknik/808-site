@@ -228,23 +228,42 @@ export function NewTrackForm() {
       </FieldIsland>
 
       <FieldIsland title="На каком этапе трек?">
-        <div className="grid grid-cols-5 gap-2">
-          {trackStatuses.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setStatus(option)}
-              className="flex flex-col items-center gap-2 text-center"
-            >
-              <span
-                className={clsx(
-                  "size-12 rounded-full border border-white/8 transition",
-                  status === option ? "bg-[#78F761] shadow-[0_0_20px_rgba(120,247,97,0.25)]" : "bg-[#303030]",
-                )}
-              />
-              <span className="text-[12px] text-[#838383]">{trackStatusLabels[option]}</span>
-            </button>
-          ))}
+        <div className="grid gap-3">
+          <div className="grid grid-cols-2 gap-2">
+            {trackStatuses.slice(0, 2).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setStatus(option)}
+                className="flex flex-col items-center gap-2 text-center"
+              >
+                <span
+                  className={clsx(
+                    "size-12 rounded-full border border-white/8 transition",
+                    status === option ? "bg-[#78F761] shadow-[0_0_20px_rgba(120,247,97,0.25)]" : "bg-[#303030]",
+                  )}
+                />
+                <span className="text-[12px] text-[#838383]">{trackStatusLabels[option]}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-[22px] border border-dashed border-white/16 p-3">
+            <p className="mb-3 text-center text-[13px] leading-snug text-[#838383]">Эти статусы будут доступны дальше в трекере</p>
+            <div className="grid grid-cols-3 gap-2">
+              {trackStatuses.slice(2).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  disabled
+                  className="flex cursor-not-allowed flex-col items-center gap-2 text-center opacity-45"
+                >
+                  <span className="size-12 rounded-full border border-dashed border-white/12 bg-[#303030]" />
+                  <span className="text-[12px] text-[#838383]">{trackStatusLabels[option]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </FieldIsland>
 
