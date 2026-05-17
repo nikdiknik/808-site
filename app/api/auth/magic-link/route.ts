@@ -33,7 +33,14 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    const isRateLimit = error.message.toLowerCase().includes("rate limit");
+    return NextResponse.json(
+      {
+        error: isRateLimit ? "По Email сейчас войти не получается. Попробуй войти по логину" : error.message,
+        code: isRateLimit ? "EMAIL_RATE_LIMIT" : "SUPABASE_ERROR",
+      },
+      { status: isRateLimit ? 429 : 400 },
+    );
   }
 
   return NextResponse.json({ ok: true });

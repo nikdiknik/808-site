@@ -12,6 +12,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerPasswordAgain, setRegisterPasswordAgain] = useState("");
   const [error, setError] = useState(initialError || "");
+  const [errorCode, setErrorCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
@@ -22,6 +23,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setErrorCode("");
     setIsSent(false);
 
     setIsLoading(true);
@@ -35,16 +37,18 @@ export function SignInForm({ initialError }: { initialError?: string }) {
         body: JSON.stringify({ email: email.trim() }),
       });
 
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; code?: string };
 
       if (!response.ok) {
         setError(result.error || "Не получилось отправить ссылку");
+        setErrorCode(result.code || "");
         return;
       }
 
       setIsSent(true);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Не получилось отправить ссылку");
+      setErrorCode("");
     } finally {
       setIsLoading(false);
     }
@@ -53,6 +57,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
   async function submitPasswordLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setErrorCode("");
     setIsSent(false);
     setIsPasswordLoading(true);
 
@@ -86,6 +91,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
   async function submitRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setErrorCode("");
     setIsSent(false);
     setIsRegisterLoading(true);
 
@@ -144,9 +150,18 @@ export function SignInForm({ initialError }: { initialError?: string }) {
       </form>
 
       {error ? (
-        <p className="mt-4 rounded-[18px] border border-[#D621D7]/30 bg-[#D621D7]/10 p-4 text-[15px] leading-relaxed text-[#FFD8FF]">
-          {error}
-        </p>
+        errorCode === "EMAIL_RATE_LIMIT" ? (
+          <div className="mt-4 rounded-[18px] border border-[#78F761]/25 bg-[#111111] p-4">
+            <p className="heading-font text-[12px] uppercase text-[#78F761]">Email лимит</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-[#D8D8D8]">
+              По Email сейчас войти не получается. Попробуй войти по логину
+            </p>
+          </div>
+        ) : (
+          <p className="mt-4 rounded-[18px] border border-[#D621D7]/30 bg-[#D621D7]/10 p-4 text-[15px] leading-relaxed text-[#FFD8FF]">
+            {error}
+          </p>
+        )
       ) : null}
 
       {isSent ? (
@@ -258,6 +273,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
           type="button"
           onClick={() => {
             setError("");
+            setErrorCode("");
             setIsSent(false);
             setIsPasswordOpen(true);
             setPasswordMode("login");
