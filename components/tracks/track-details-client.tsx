@@ -118,18 +118,6 @@ function makeStructureItem(title: string) {
   };
 }
 
-function getStatusAvailability(progressSections: TrackProgressSection[]) {
-  const structureDone = progressSections.some((section) => section.id === "structure" && section.isDone);
-  const preMixSectionsDone = progressSections
-    .filter((section) => section.id !== "mixing_mastering")
-    .every((section) => section.isSkipped || section.isDone);
-  const mixingStarted = progressSections
-    .find((section) => section.id === "mixing_mastering")
-    ?.items.some((item) => item.isDone) || false;
-
-  return { structureDone, preMixSectionsDone, mixingStarted };
-}
-
 export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
   const router = useRouter();
   const initialTrack = { ...track, progressSections: normalizeProgressSections(track.progressSections) };
@@ -137,7 +125,6 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
   const [title, setTitle] = useState(track.title);
   const [subtitle, setSubtitle] = useState(track.subtitle);
   const [notes, setNotes] = useState(track.notes);
-  const [status, setStatus] = useState(track.status);
   const [instruments, setInstruments] = useState(track.instruments);
   const [progressSections, setProgressSections] = useState(initialTrack.progressSections);
   const [isEditingInstruments, setIsEditingInstruments] = useState(false);
@@ -151,21 +138,6 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [savingProgressKey, setSavingProgressKey] = useState("");
   const [error, setError] = useState("");
-  const statusAvailability = getStatusAvailability(progressSections);
-
-  function isStatusDisabled(option: Track["status"]) {
-    if (option === "arrangement") return !statusAvailability.structureDone;
-    if (option === "recording") return !statusAvailability.preMixSectionsDone;
-    if (option === "mixing") return true;
-    return false;
-  }
-
-  function getStatusHint(option: Track["status"]) {
-    if (option === "arrangement" && !statusAvailability.structureDone) return "Сначала собери структуру";
-    if (option === "recording" && !statusAvailability.preMixSectionsDone) return "Сначала закрой этапы до сведения";
-    if (option === "mixing") return "Включится автоматически, когда начнёшь сведение";
-    return "";
-  }
 
   function syncTrack(nextTrack: Track) {
     const normalizedTrack = { ...nextTrack, progressSections: normalizeProgressSections(nextTrack.progressSections) };
@@ -173,7 +145,6 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
     setTitle(nextTrack.title);
     setSubtitle(nextTrack.subtitle);
     setNotes(nextTrack.notes);
-    setStatus(nextTrack.status);
     setInstruments(nextTrack.instruments);
     setProgressSections(normalizedTrack.progressSections);
   }
@@ -200,7 +171,7 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
     setIsSaving(true);
 
     try {
-      await patchTrack({ title, subtitle, notes, status });
+      await patchTrack({ title, subtitle, notes });
       setIsEditing(false);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Не получилось сохранить трек");
@@ -432,7 +403,6 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
                 setTitle(savedTrack.title);
                 setSubtitle(savedTrack.subtitle);
                 setNotes(savedTrack.notes);
-                setStatus(savedTrack.status);
                 setIsEditing(false);
               }}
               className="flex min-h-[52px] items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
@@ -486,31 +456,23 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
         <p className="heading-font text-[12px] uppercase text-[#78F761]">статус</p>
         <div className="mt-5 grid grid-cols-5 gap-2">
           {trackStatuses.map((option) => {
-            const selected = status === option;
-            const locked = isStatusDisabled(option);
+            const selected = savedTrack.status === option;
             return (
-              <button
+              <div
                 key={option}
-                type={isEditing ? "button" : "button"}
-                disabled={!isEditing || locked}
-                onClick={() => {
-                  if (locked) return;
-                  setStatus(option);
-                }}
-                title={getStatusHint(option)}
-                className="flex flex-col items-center gap-2 text-center disabled:cursor-default"
+                className="flex flex-col items-center gap-2 text-center"
               >
                 <span
                   className={clsx(
                     "size-12 rounded-full border transition",
                     selected ? "bg-[#78F761] shadow-[0_0_20px_rgba(120,247,97,0.25)]" : "bg-[#303030]",
-                    locked ? "border-dashed border-white/12 opacity-35" : "border-white/8",
+                    "border-white/8",
                   )}
                 />
-                <span className={clsx("text-[12px]", selected ? "text-white" : "text-[#838383]", locked && "opacity-45")}>
+                <span className={clsx("text-[12px]", selected ? "text-white" : "text-[#838383]")}>
                   {trackStatusLabels[option]}
                 </span>
-              </button>
+              </div>
             );
           })}
         </div>

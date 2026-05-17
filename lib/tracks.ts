@@ -246,6 +246,7 @@ function normalizeProgressSections(sections: TrackProgressSection[]): TrackProgr
 }
 
 function getStatusAvailability(progressSections: TrackProgressSection[]) {
+  const ideaDone = progressSections.some((section) => section.id === "idea" && section.isDone);
   const structureDone = progressSections.some((section) => section.id === "structure" && section.isDone);
   const preMixSectionsDone = progressSections
     .filter((section) => section.id !== "mixing_mastering")
@@ -254,18 +255,17 @@ function getStatusAvailability(progressSections: TrackProgressSection[]) {
     .find((section) => section.id === "mixing_mastering")
     ?.items.some((item) => item.isDone) || false;
 
-  return { structureDone, preMixSectionsDone, mixingStarted };
+  return { ideaDone, structureDone, preMixSectionsDone, mixingStarted };
 }
 
-function normalizeTrackStatus(status: TrackStatus, progressSections: TrackProgressSection[]): TrackStatus {
-  const { structureDone, preMixSectionsDone, mixingStarted } = getStatusAvailability(progressSections);
+function normalizeTrackStatus(progressSections: TrackProgressSection[]): TrackStatus {
+  const { ideaDone, structureDone, preMixSectionsDone, mixingStarted } = getStatusAvailability(progressSections);
 
-  if (preMixSectionsDone && mixingStarted) return "mixing";
-  if (!structureDone && ["arrangement", "recording", "mixing"].includes(status)) return "demo";
-  if (!preMixSectionsDone && ["recording", "mixing"].includes(status)) return structureDone ? "arrangement" : "demo";
-  if (status === "mixing" && !mixingStarted) return "recording";
-
-  return status;
+  if (mixingStarted) return "mixing";
+  if (preMixSectionsDone) return "recording";
+  if (ideaDone && structureDone) return "arrangement";
+  if (ideaDone || structureDone) return "demo";
+  return "idea";
 }
 
 export function recalculateTrackProgress(track: Track): Track {
@@ -304,7 +304,7 @@ export function recalculateTrackProgress(track: Track): Track {
     .flatMap((section) => (section.id === "structure" ? [{ isDone: section.isDone }] : [...section.items, ...(section.structureItems || [])]));
   const doneUnits = progressUnits.filter((item) => item.isDone);
   const progressPercent = progressUnits.length ? Math.round((doneUnits.length / progressUnits.length) * 100) : 0;
-  const status = normalizeTrackStatus(track.status, progressSections);
+  const status = normalizeTrackStatus(progressSections);
   return { ...track, status, progressSections, progressPercent };
 }
 
