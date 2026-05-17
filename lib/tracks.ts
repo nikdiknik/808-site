@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import path from "node:path";
@@ -61,6 +62,12 @@ type TracksData = {
   tracks: Record<string, Track>;
 };
 
+export type TracksStorageInfo = {
+  tracksPath: string;
+  fileExists: boolean;
+  directoryWritable: boolean;
+};
+
 export const createTrackSchema = z.object({
   title: z.string().trim().min(1, "Добавь название демки").max(120),
   subtitle: z.string().trim().max(180).optional().default(""),
@@ -99,6 +106,16 @@ async function saveTracks(data: TracksData): Promise<void> {
   await mkdir(path.dirname(tracksPath), { recursive: true });
   await access(path.dirname(tracksPath), constants.W_OK);
   await writeFile(tracksPath, JSON.stringify(data, null, 2), "utf8");
+}
+
+async function canWriteDirectory(directory: string): Promise<boolean> {
+  try {
+    await mkdir(directory, { recursive: true });
+    await access(directory, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function makeItems(titles: string[]): TrackProgressItem[] {
@@ -314,6 +331,22 @@ export async function getUserTracks(user: AppUser): Promise<Track[]> {
     .filter((track) => track.userId === user.id)
     .map((track) => recalculateTrackProgress(track))
     .sort((first, second) => Date.parse(second.updatedAt) - Date.parse(first.updatedAt));
+}
+
+export async function getAllTracksSnapshot(): Promise<Track[]> {
+  const data = await loadTracks();
+  return Object.values(data.tracks)
+    .map((track) => recalculateTrackProgress(track))
+    .sort((first, second) => Date.parse(second.updatedAt) - Date.parse(first.updatedAt));
+}
+
+export async function getTracksStorageInfo(): Promise<TracksStorageInfo> {
+  const tracksPath = getTracksPath();
+  return {
+    tracksPath,
+    fileExists: existsSync(tracksPath),
+    directoryWritable: await canWriteDirectory(path.dirname(tracksPath)),
+  };
 }
 
 export async function getUserTrack(user: AppUser, trackId: string): Promise<Track | null> {

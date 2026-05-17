@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
@@ -47,6 +48,12 @@ type UsersData = {
   credentials: Record<string, PasswordCredential>;
 };
 
+export type UsersStorageInfo = {
+  usersPath: string;
+  fileExists: boolean;
+  directoryWritable: boolean;
+};
+
 const defaultUsersData: UsersData = {
   users: {},
   credentials: {},
@@ -72,6 +79,16 @@ async function saveUsers(data: UsersData): Promise<void> {
   await mkdir(path.dirname(usersPath), { recursive: true });
   await access(path.dirname(usersPath), constants.W_OK);
   await writeFile(usersPath, JSON.stringify(data, null, 2), "utf8");
+}
+
+async function canWriteDirectory(directory: string): Promise<boolean> {
+  try {
+    await mkdir(directory, { recursive: true });
+    await access(directory, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function createAvatarUrl(userId: string) {
@@ -118,6 +135,28 @@ export async function ensureUserProfile(user: AppUser): Promise<UserProfile> {
   data.users[user.id] = profile;
   await saveUsers(data);
   return profile;
+}
+
+export async function getUserProfilesSnapshot(): Promise<UserProfile[]> {
+  const data = await loadUsers();
+  return Object.values(data.users).map((profile) => ({
+    ...profile,
+    login: profile.login || profile.email,
+    avatarUrl: profile.avatarUrl || createAvatarUrl(profile.id),
+    roles: profile.roles || [],
+    genres: profile.genres || [],
+    daw: profile.daw || [],
+    demos: profile.demos || [],
+  }));
+}
+
+export async function getUsersStorageInfo(): Promise<UsersStorageInfo> {
+  const usersPath = getUsersPath();
+  return {
+    usersPath,
+    fileExists: existsSync(usersPath),
+    directoryWritable: await canWriteDirectory(path.dirname(usersPath)),
+  };
 }
 
 export async function updateUserProfile(user: AppUser, update: z.infer<typeof profileUpdateSchema>): Promise<UserProfile> {
