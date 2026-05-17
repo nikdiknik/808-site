@@ -1,5 +1,6 @@
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { z } from "zod";
 
@@ -19,6 +20,7 @@ export const profileUpdateSchema = z.object({
 export type UserProfile = {
   id: string;
   email: string;
+  login: string;
   name: string;
   avatarUrl: string;
   isPremium: boolean;
@@ -31,12 +33,23 @@ export type UserProfile = {
   demos: string[];
 };
 
+type PasswordCredential = {
+  userId: string;
+  login: string;
+  email: string;
+  passwordHash: string;
+  passwordSalt: string;
+  createdAt: string;
+};
+
 type UsersData = {
   users: Record<string, UserProfile>;
+  credentials: Record<string, PasswordCredential>;
 };
 
 const defaultUsersData: UsersData = {
   users: {},
+  credentials: {},
 };
 
 function getUsersPath(): string {
@@ -69,6 +82,7 @@ function createDefaultProfile(user: AppUser): UserProfile {
   return {
     id: user.id,
     email: user.email,
+    login: user.email,
     name: "",
     avatarUrl: createAvatarUrl(user.id),
     isPremium: false,
@@ -92,6 +106,7 @@ export async function ensureUserProfile(user: AppUser): Promise<UserProfile> {
       ...existingProfile,
       id: user.id,
       email: user.email,
+      login: existingProfile.login || user.email,
       avatarUrl: existingProfile.avatarUrl || createAvatarUrl(user.id),
     };
     data.users[user.id] = normalizedProfile;
@@ -112,6 +127,7 @@ export async function updateUserProfile(user: AppUser, update: z.infer<typeof pr
     ...currentProfile,
     id: user.id,
     email: user.email,
+    login: currentProfile.login || user.email,
     name: update.name ?? currentProfile.name,
     roles: update.roles ?? currentProfile.roles,
     experience: update.experience ?? currentProfile.experience,
@@ -123,6 +139,95 @@ export async function updateUserProfile(user: AppUser, update: z.infer<typeof pr
   data.users[user.id] = nextProfile;
   await saveUsers(data);
   return nextProfile;
+}
+
+function normalizeLogin(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function hashPassword(password: string, salt = randomBytes(16).toString("hex")) {
+  return {
+    salt,
+    hash: scryptSync(password, salt, 64).toString("hex"),
+  };
+}
+
+function verifyPassword(password: string, salt: string, expectedHash: string) {
+  const hash = scryptSync(password, salt, 64);
+  const expected = Buffer.from(expectedHash, "hex");
+  return expected.length === hash.length && timingSafeEqual(hash, expected);
+}
+
+export async function registerPasswordUser({
+  login,
+  email,
+  password,
+}: {
+  login: string;
+  email: string;
+  password: string;
+}): Promise<UserProfile> {
+  const data = await loadUsers();
+  const normalizedLogin = normalizeLogin(login);
+  const normalizedEmail = normalizeEmail(email);
+
+  const existingCredential = Object.values(data.credentials).find(
+    (credential) => credential.login === normalizedLogin || credential.email === normalizedEmail,
+  );
+  if (existingCredential) {
+    const error = new Error("USER_EXISTS");
+    error.name = "USER_EXISTS";
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+  const userId = `local_${randomBytes(12).toString("hex")}`;
+  const { salt, hash } = hashPassword(password);
+  const profile = createDefaultProfile({ id: userId, email: normalizedEmail, role: "user" });
+  profile.login = normalizedLogin;
+  profile.createdAt = now;
+
+  data.users[userId] = profile;
+  data.credentials[normalizedLogin] = {
+    userId,
+    login: normalizedLogin,
+    email: normalizedEmail,
+    passwordHash: hash,
+    passwordSalt: salt,
+    createdAt: now,
+  };
+  await saveUsers(data);
+  return profile;
+}
+
+export async function verifyPasswordUser(loginOrEmail: string, password: string): Promise<UserProfile | null> {
+  const data = await loadUsers();
+  const normalizedValue = normalizeLogin(loginOrEmail);
+  const credential = Object.values(data.credentials).find(
+    (item) => item.login === normalizedValue || item.email === normalizedValue,
+  );
+  if (!credential || !verifyPassword(password, credential.passwordSalt, credential.passwordHash)) return null;
+
+  return data.users[credential.userId] || null;
+}
+
+export async function getPasswordUserById(userId: string): Promise<UserProfile | null> {
+  const data = await loadUsers();
+  const credential = Object.values(data.credentials).find((item) => item.userId === userId);
+  if (!credential) return null;
+  return data.users[userId] || null;
+}
+
+export async function getPasswordUserByEmail(email: string): Promise<UserProfile | null> {
+  const data = await loadUsers();
+  const normalizedEmail = normalizeEmail(email);
+  const credential = Object.values(data.credentials).find((item) => item.email === normalizedEmail);
+  if (!credential) return null;
+  return data.users[credential.userId] || null;
 }
 
 export async function addUserDemo(user: AppUser, trackId: string): Promise<void> {

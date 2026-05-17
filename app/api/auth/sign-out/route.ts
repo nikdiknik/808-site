@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { clearAdminSession, createSupabaseServerClient } from "@/lib/supabase/server";
+import { clearAdminSession, clearPasswordSession, createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST() {
   await clearAdminSession();
+  await clearPasswordSession();
 
   const supabase = await createSupabaseServerClient();
   if (supabase) {
