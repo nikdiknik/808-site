@@ -638,14 +638,16 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
                     <span className={clsx("heading-font text-[12px] uppercase", getStructureItems().length ? "text-[#78F761]" : "text-[#838383]")}>
                       {getStructureItems().length ? "done" : "todo"}
                     </span>
-                    <button
-                      type="button"
-                      onClick={openStructureBuilder}
-                      aria-label="Редактировать структуру"
-                      className="flex h-8 w-12 items-center justify-center rounded-full bg-[#303030] text-[#78F761] transition hover:bg-[#3D3D3D]"
-                    >
-                      <PencilIcon />
-                    </button>
+                    {getStructureItems().length ? (
+                      <button
+                        type="button"
+                        onClick={openStructureBuilder}
+                        aria-label="Редактировать структуру"
+                        className="flex h-8 w-12 items-center justify-center rounded-full bg-[#303030] text-[#78F761] transition hover:bg-[#3D3D3D]"
+                      >
+                        <PencilIcon />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 
