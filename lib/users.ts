@@ -13,6 +13,7 @@ export const profileUpdateSchema = z.object({
   experience: z.union([z.enum(["newbie", "middle", "advanced", "pro"]), z.literal("")]).optional(),
   genres: z.array(z.enum(genreOptions)).optional(),
   daw: z.array(z.enum(dawOptions)).optional(),
+  isPremium: z.boolean().optional(),
 });
 
 export type UserProfile = {
@@ -116,6 +117,7 @@ export async function updateUserProfile(user: AppUser, update: z.infer<typeof pr
     experience: update.experience ?? currentProfile.experience,
     genres: update.genres ?? currentProfile.genres,
     daw: update.daw ?? currentProfile.daw,
+    isPremium: user.role === "admin" && typeof update.isPremium === "boolean" ? update.isPremium : currentProfile.isPremium,
   };
 
   data.users[user.id] = nextProfile;

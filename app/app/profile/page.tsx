@@ -33,6 +33,7 @@ export default async function ProfilePage() {
         <h1 className="heading-font mt-5 text-[34px] leading-tight text-white md:text-[48px]">Профиль</h1>
         <ProfileForm
           profile={profile}
+          isAdmin={user.role === "admin"}
           actions={
             <>
               <SignOutButton variant="secondary" />

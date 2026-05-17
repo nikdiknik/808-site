@@ -10,6 +10,7 @@ import type { UserProfile } from "@/lib/users";
 
 type ProfileFormProps = {
   profile: UserProfile;
+  isAdmin?: boolean;
   actions?: ReactNode;
 };
 
@@ -52,7 +53,7 @@ function TagButton({
   );
 }
 
-export function ProfileForm({ profile, actions }: ProfileFormProps) {
+export function ProfileForm({ profile, isAdmin = false, actions }: ProfileFormProps) {
   const [name, setName] = useState(profile.name);
   const [roles, setRoles] = useState<UserProfile["roles"]>(profile.roles);
   const [experience, setExperience] = useState(profile.experience);
@@ -63,6 +64,7 @@ export function ProfileForm({ profile, actions }: ProfileFormProps) {
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isNameSaving, setIsNameSaving] = useState(false);
+  const [isPremiumSaving, setIsPremiumSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(!profile.name);
 
   const tagsChanged =
@@ -75,7 +77,7 @@ export function ProfileForm({ profile, actions }: ProfileFormProps) {
     return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
   }
 
-  async function patchProfile(update: Partial<Pick<UserProfile, "name" | "roles" | "experience" | "genres" | "daw">>) {
+  async function patchProfile(update: Partial<Pick<UserProfile, "name" | "roles" | "experience" | "genres" | "daw" | "isPremium">>) {
     const response = await fetch("/api/profile", {
       method: "PATCH",
       headers: {
@@ -125,6 +127,23 @@ export function ProfileForm({ profile, actions }: ProfileFormProps) {
       setError(caughtError instanceof Error ? caughtError.message : "Не получилось сохранить профиль");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function togglePremium() {
+    if (!isAdmin) return;
+    setStatus("");
+    setError("");
+    setIsPremiumSaving(true);
+
+    try {
+      const nextProfile = await patchProfile({ isPremium: !savedProfile.isPremium });
+      setSavedProfile(nextProfile);
+      setStatus(nextProfile.isPremium ? "Premium включён" : "Premium выключен");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Не получилось обновить Premium");
+    } finally {
+      setIsPremiumSaving(false);
     }
   }
 
@@ -230,7 +249,24 @@ export function ProfileForm({ profile, actions }: ProfileFormProps) {
       <div className="grid gap-3 md:grid-cols-2">
         <ReadOnlyCard label="id" value={savedProfile.id} />
         <ReadOnlyCard label="email / логин" value={savedProfile.email} />
-        <ReadOnlyCard label="premium" value={savedProfile.isPremium ? "Да" : "Нет"} />
+        {isAdmin ? (
+          <section className="rounded-[22px] bg-[#1E1E1E] p-4">
+            <p className="heading-font text-[12px] uppercase text-[#78F761]">premium</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <p className="text-[17px] leading-relaxed text-[#D8D8D8]">{savedProfile.isPremium ? "Включён" : "Выключен"}</p>
+              <button
+                type="button"
+                onClick={togglePremium}
+                disabled={isPremiumSaving}
+                className="flex min-h-[42px] items-center justify-center rounded-full bg-[#303030] px-4 text-[15px] font-bold text-white transition hover:bg-[#3D3D3D] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isPremiumSaving ? <Loader2 size={16} className="animate-spin" /> : savedProfile.isPremium ? "Сделать Free" : "Включить Premium"}
+              </button>
+            </div>
+          </section>
+        ) : (
+          <ReadOnlyCard label="premium" value={savedProfile.isPremium ? "Да" : "Нет"} />
+        )}
         <ReadOnlyCard label="перезапусков" value={savedProfile.restartCount} />
         <ReadOnlyCard label="создан" value={formatDate(savedProfile.createdAt)} />
         <ReadOnlyCard label="демки" value={savedProfile.demos.length ? savedProfile.demos.length : "Пока пусто"} />

@@ -24,6 +24,9 @@ export async function PATCH(request: Request) {
 
   try {
     const update = profileUpdateSchema.parse(await request.json());
+    if (typeof update.isPremium === "boolean" && user.role !== "admin") {
+      return NextResponse.json({ error: "Недостаточно прав" }, { status: 403 });
+    }
     const profile = await updateUserProfile(user, update);
     return NextResponse.json({ profile });
   } catch (error) {
