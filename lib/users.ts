@@ -180,6 +180,20 @@ export async function updateUserProfile(user: AppUser, update: z.infer<typeof pr
   return nextProfile;
 }
 
+export async function setUserPremiumById(userId: string, isPremium: boolean): Promise<UserProfile | null> {
+  const data = await loadUsers();
+  const profile = data.users[userId];
+  if (!profile) return null;
+
+  const nextProfile: UserProfile = {
+    ...profile,
+    isPremium,
+  };
+  data.users[userId] = nextProfile;
+  await saveUsers(data);
+  return nextProfile;
+}
+
 function normalizeLogin(value: string) {
   return value.trim().toLowerCase();
 }
@@ -202,20 +216,19 @@ function verifyPassword(password: string, salt: string, expectedHash: string) {
 }
 
 export async function registerPasswordUser({
-  login,
   email,
+  name,
   password,
 }: {
-  login: string;
   email: string;
+  name: string;
   password: string;
 }): Promise<UserProfile> {
   const data = await loadUsers();
-  const normalizedLogin = normalizeLogin(login);
   const normalizedEmail = normalizeEmail(email);
 
   const existingCredential = Object.values(data.credentials).find(
-    (credential) => credential.login === normalizedLogin || credential.email === normalizedEmail,
+    (credential) => credential.login === normalizedEmail || credential.email === normalizedEmail,
   );
   if (existingCredential) {
     const error = new Error("USER_EXISTS");
@@ -227,13 +240,14 @@ export async function registerPasswordUser({
   const userId = `local_${randomBytes(12).toString("hex")}`;
   const { salt, hash } = hashPassword(password);
   const profile = createDefaultProfile({ id: userId, email: normalizedEmail, role: "user" });
-  profile.login = normalizedLogin;
+  profile.login = normalizedEmail;
+  profile.name = name.trim();
   profile.createdAt = now;
 
   data.users[userId] = profile;
-  data.credentials[normalizedLogin] = {
+  data.credentials[normalizedEmail] = {
     userId,
-    login: normalizedLogin,
+    login: normalizedEmail,
     email: normalizedEmail,
     passwordHash: hash,
     passwordSalt: salt,

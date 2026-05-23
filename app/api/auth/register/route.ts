@@ -6,8 +6,8 @@ import { registerPasswordUser } from "@/lib/users";
 
 const requestSchema = z
   .object({
-    login: z.string().trim().min(2, "Логин слишком короткий").max(40, "Логин слишком длинный"),
     email: z.string().trim().email("Введи корректный email"),
+    name: z.string().trim().min(2, "Никнейм слишком короткий").max(80, "Никнейм слишком длинный"),
     password: z.string().min(6, "Пароль должен быть не короче 6 символов"),
     passwordAgain: z.string().min(6, "Повтори пароль"),
   })
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Error && error.name === "USER_EXISTS") {
-      return NextResponse.json({ error: "Такой логин или email уже зарегистрирован" }, { status: 409 });
+      return NextResponse.json({ error: "Такой email уже зарегистрирован" }, { status: 409 });
     }
 
     return NextResponse.json({ error: "Не получилось зарегистрироваться" }, { status: 500 });

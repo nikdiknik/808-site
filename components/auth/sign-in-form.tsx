@@ -3,12 +3,22 @@
 import { FormEvent, useState } from "react";
 import { KeyRound, Loader2, Mail } from "lucide-react";
 
-export function SignInForm({ initialError }: { initialError?: string }) {
+export type AuthMode = "email" | "password" | "register";
+
+export function SignInForm({
+  initialError,
+  authMode,
+  onAuthModeChange,
+}: {
+  initialError?: string;
+  authMode: AuthMode;
+  onAuthModeChange: (mode: AuthMode) => void;
+}) {
   const [email, setEmail] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
-  const [registerLogin, setRegisterLogin] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
+  const [registerName, setRegisterName] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerPasswordAgain, setRegisterPasswordAgain] = useState("");
   const [error, setError] = useState(initialError || "");
@@ -17,8 +27,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-  const [passwordMode, setPasswordMode] = useState<"login" | "register">("login");
+  const isEmailMode = authMode === "email";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,8 +111,8 @@ export function SignInForm({ initialError }: { initialError?: string }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          login: registerLogin.trim(),
           email: registerEmail.trim(),
+          name: registerName.trim(),
           password: registerPassword,
           passwordAgain: registerPasswordAgain,
         }),
@@ -126,28 +135,30 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 
   return (
     <div className="w-full">
-      <form onSubmit={submit}>
-        <label className="block">
-          <span className="heading-font text-[12px] uppercase text-[#78F761]">email</span>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="name@email.com"
-            className="mt-3 min-h-[56px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[17px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
-          />
-        </label>
+      {isEmailMode ? (
+        <form onSubmit={submit}>
+          <label className="block">
+            <span className="heading-font text-[12px] uppercase text-[#78F761]">email</span>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@email.com"
+              className="mt-3 min-h-[56px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[17px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
+            />
+          </label>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="mt-5 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Mail size={18} />}
-          {isLoading ? "Отправляем ссылку" : "Войти по email"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="mt-5 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Mail size={18} />}
+            {isLoading ? "Отправляем ссылку" : "Войти по email"}
+          </button>
+        </form>
+      ) : null}
 
       {error ? (
         errorCode === "EMAIL_RATE_LIMIT" ? (
@@ -170,9 +181,9 @@ export function SignInForm({ initialError }: { initialError?: string }) {
         </p>
       ) : null}
 
-      {isPasswordOpen ? (
+      {!isEmailMode ? (
         <div className="mt-3 rounded-[24px] border border-white/6 bg-[#111111] p-4">
-          {passwordMode === "login" ? (
+          {authMode === "password" ? (
             <form onSubmit={submitPasswordLogin}>
               <div className="grid gap-3">
                 <input
@@ -180,7 +191,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
                   required
                   value={login}
                   onChange={(event) => setLogin(event.target.value)}
-                  placeholder="Логин или email"
+                  placeholder="Email"
                   className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
                 />
                 <input
@@ -204,7 +215,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
                 type="button"
                 onClick={() => {
                   setError("");
-                  setPasswordMode("register");
+                  onAuthModeChange("register");
                 }}
                 className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
               >
@@ -215,19 +226,19 @@ export function SignInForm({ initialError }: { initialError?: string }) {
             <form onSubmit={submitRegister}>
               <div className="grid gap-3">
                 <input
-                  type="text"
-                  required
-                  value={registerLogin}
-                  onChange={(event) => setRegisterLogin(event.target.value)}
-                  placeholder="Логин"
-                  className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
-                />
-                <input
                   type="email"
                   required
                   value={registerEmail}
                   onChange={(event) => setRegisterEmail(event.target.value)}
                   placeholder="Email"
+                  className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
+                />
+                <input
+                  type="text"
+                  required
+                  value={registerName}
+                  onChange={(event) => setRegisterName(event.target.value)}
+                  placeholder="Никнейм"
                   className="min-h-[52px] w-full rounded-[18px] border border-white/6 bg-[#303030] px-4 text-[16px] text-white outline-none placeholder:text-white/25 focus:border-[#78F761]"
                 />
                 <input
@@ -259,7 +270,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
                 type="button"
                 onClick={() => {
                   setError("");
-                  setPasswordMode("login");
+                  onAuthModeChange("password");
                 }}
                 className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
               >
@@ -275,8 +286,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
             setError("");
             setErrorCode("");
             setIsSent(false);
-            setIsPasswordOpen(true);
-            setPasswordMode("login");
+            onAuthModeChange("password");
           }}
           className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
         >

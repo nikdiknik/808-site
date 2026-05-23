@@ -559,12 +559,6 @@ export function RestartFlow({ initialExperience = null, tracks = [] }: RestartFl
               Создание откроется в трекере. После добавления можно вернуться сюда и подобрать перезапуск уже для этой демки
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link
-                href="/app/tracks/new"
-                className="flex min-h-[54px] items-center justify-center rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110"
-              >
-                Добавить демку
-              </Link>
               <button
                 type="button"
                 onClick={() => setAddDemoOpen(false)}
@@ -572,6 +566,12 @@ export function RestartFlow({ initialExperience = null, tracks = [] }: RestartFl
               >
                 Закрыть
               </button>
+              <Link
+                href="/app/tracks/new"
+                className="flex min-h-[54px] items-center justify-center rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110"
+              >
+                Добавить демку
+              </Link>
             </div>
           </div>
         </div>

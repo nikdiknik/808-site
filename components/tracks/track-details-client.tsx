@@ -390,14 +390,6 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
           {error ? <p className="mt-3 rounded-[16px] border border-[#D621D7]/30 bg-[#D621D7]/10 p-3 text-[#FFD8FF]">{error}</p> : null}
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
-              type="submit"
-              disabled={isSaving || !title.trim()}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <FilledCheck />}
-              Сохранить
-            </button>
-            <button
               type="button"
               onClick={() => {
                 setTitle(savedTrack.title);
@@ -408,6 +400,14 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
               className="flex min-h-[52px] items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
             >
               Отменить
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving || !title.trim()}
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <FilledCheck />}
+              Сохранить
             </button>
           </div>
         </form>
@@ -457,6 +457,7 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
         <div className="mt-5 grid grid-cols-5 gap-2">
           {trackStatuses.map((option) => {
             const selected = savedTrack.status === option;
+            const isPast = trackStatuses.indexOf(option) < trackStatuses.indexOf(savedTrack.status);
             return (
               <div
                 key={option}
@@ -465,8 +466,9 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
                 <span
                   className={clsx(
                     "size-12 rounded-full border transition",
-                    selected ? "bg-[#78F761] shadow-[0_0_20px_rgba(120,247,97,0.25)]" : "bg-[#303030]",
-                    "border-white/8",
+                    selected && "border-[#78F761] bg-[#78F761] shadow-[0_0_20px_rgba(120,247,97,0.25)]",
+                    isPast && !selected && "border-[#838383] bg-[#838383]",
+                    !selected && !isPast && "border-white/8 bg-[#303030]",
                   )}
                 />
                 <span className={clsx("text-[12px]", selected ? "text-white" : "text-[#838383]")}>
@@ -649,31 +651,26 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-[20px] font-bold leading-tight text-white">{section.title}</h2>
-                  <p className="mt-2 text-[14px] leading-snug text-[#838383]">{section.description}</p>
-                  {section.id === "vocal" ? (
-                    <button
-                      type="button"
-                      onClick={() => setVocalEnabled(Boolean(section.isSkipped))}
-                      disabled={Boolean(savingProgressKey)}
-                      className="mt-4 flex items-center gap-3 rounded-full bg-[#303030] px-3 py-2 text-[14px] text-white transition hover:bg-[#3D3D3D] disabled:cursor-wait"
-                    >
-                      <span
-                        className={clsx(
-                          "relative h-6 w-11 rounded-full transition",
-                          section.isSkipped ? "bg-[#1E1E1E]" : "bg-[#78F761]",
-                        )}
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-[20px] font-bold leading-tight text-white">{section.title}</h2>
+                    {section.id === "vocal" ? (
+                      <button
+                        type="button"
+                        onClick={() => setVocalEnabled(Boolean(section.isSkipped))}
+                        disabled={Boolean(savingProgressKey)}
+                        aria-label={section.isSkipped ? "Включить вокал" : "Выключить вокал"}
+                        className="relative h-6 w-11 rounded-full bg-[#303030] transition hover:bg-[#3D3D3D] disabled:cursor-wait"
                       >
                         <span
                           className={clsx(
-                            "absolute top-1 size-4 rounded-full bg-white transition",
-                            section.isSkipped ? "left-1 opacity-50" : "left-6",
+                            "absolute top-1 size-4 rounded-full transition",
+                            section.isSkipped ? "left-1 bg-[#838383]" : "left-6 bg-[#78F761]",
                           )}
                         />
-                      </span>
-                      <span>{section.isSkipped ? "В треке нет вокала" : "Вокал есть в треке"}</span>
-                    </button>
-                  ) : null}
+                      </button>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-[14px] leading-snug text-[#838383]">{section.description}</p>
                 </div>
                 <span className={clsx("heading-font text-[12px] uppercase", section.isDone ? "text-[#78F761]" : "text-[#838383]")}>
                   {section.isSkipped ? "off" : section.isDone ? "done" : "todo"}
@@ -735,7 +732,7 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
             onClick={() => document.getElementById("track-progress")?.scrollIntoView({ behavior: "smooth", block: "center" })}
             className="flex min-h-[52px] w-full items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D] sm:w-auto"
           >
-            Перейти к прогрессу
+            Вернуться к прогрессу
           </button>
         </div>
       </section>
@@ -803,19 +800,6 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
               </button>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              {structureParts.map((part) => (
-                <button
-                  key={part}
-                  type="button"
-                  onClick={() => addStructurePart(part)}
-                  className="rounded-full bg-[#303030] px-4 py-2 text-[15px] text-white transition hover:bg-[#3D3D3D]"
-                >
-                  + {part}
-                </button>
-              ))}
-            </div>
-
             <div className="mt-5 grid gap-2">
               {structureDraft.length ? (
                 structureDraft.map((item, index) => (
@@ -852,9 +836,29 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
               )}
             </div>
 
+            <div className="mt-5 flex flex-wrap gap-2">
+              {structureParts.map((part) => (
+                <button
+                  key={part}
+                  type="button"
+                  onClick={() => addStructurePart(part)}
+                  className="rounded-full bg-[#303030] px-4 py-2 text-[15px] text-white transition hover:bg-[#3D3D3D]"
+                >
+                  + {part}
+                </button>
+              ))}
+            </div>
+
             {error ? <p className="mt-4 rounded-[16px] border border-[#D621D7]/30 bg-[#D621D7]/10 p-3 text-[#FFD8FF]">{error}</p> : null}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setIsStructureModalOpen(false)}
+                className="flex min-h-[54px] items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
+              >
+                Отменить
+              </button>
               <button
                 type="button"
                 onClick={saveStructure}
@@ -862,13 +866,6 @@ export function TrackDetailsClient({ track }: TrackDetailsClientProps) {
                 className="flex min-h-[54px] items-center justify-center rounded-full bg-[#78F761] px-5 text-[16px] font-bold text-[#0A0A0A] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {isSaving ? <Loader2 size={18} className="animate-spin" /> : "Сохранить структуру"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsStructureModalOpen(false)}
-                className="flex min-h-[54px] items-center justify-center rounded-full bg-[#303030] px-5 text-[16px] font-bold text-white transition hover:bg-[#3D3D3D]"
-              >
-                Отменить
               </button>
             </div>
           </div>

@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { PremiumToggle } from "@/components/admin/premium-toggle";
 import { getAnalyticsSnapshot, getAnalyticsStorageInfo } from "@/lib/analytics";
 import { experienceLabels, problemLabels, type ExperienceId, type ProblemId } from "@/lib/options";
 import { dawOptions, genreOptions, roleOptions } from "@/lib/profile-options";
 import { getAllTracksSnapshot, getTracksStorageInfo, type Track } from "@/lib/tracks";
 import { trackStatusLabels, trackStatuses } from "@/lib/track-options";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { getUserProfilesSnapshot, getUsersStorageInfo, type UserProfile } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
@@ -93,6 +96,11 @@ function StorageCard({ label, value }: { label: string; value: string }) {
 }
 
 export default async function AnalyticsPage() {
+  const currentUser = await getCurrentUser();
+  if (currentUser?.role !== "admin") {
+    redirect("/auth/sign-in");
+  }
+
   const [analytics, analyticsStorage, users, usersStorage, tracks, tracksStorage] = await Promise.all([
     getAnalyticsSnapshot(),
     getAnalyticsStorageInfo(),
@@ -184,12 +192,11 @@ export default async function AnalyticsPage() {
           </div>
 
           <div className="mt-6 overflow-x-auto rounded-[24px] border border-white/6 bg-[#1E1E1E]">
-            <table className="min-w-[1080px] w-full border-collapse text-left text-[14px] text-[#D8D8D8]">
+            <table className="min-w-[980px] w-full border-collapse text-left text-[14px] text-[#D8D8D8]">
               <thead className="heading-font text-[11px] uppercase text-[#78F761]">
                 <tr>
                   <th className="px-4 py-4">Никнейм</th>
-                  <th className="px-4 py-4">Login</th>
-                  <th className="px-4 py-4">Email</th>
+                  <th className="px-4 py-4">Email / логин</th>
                   <th className="px-4 py-4">Premium</th>
                   <th className="px-4 py-4">Демок</th>
                   <th className="px-4 py-4">Средний прогресс</th>
@@ -203,9 +210,10 @@ export default async function AnalyticsPage() {
                   userRows.map(({ user, tracks: userTracks, averageProgress, lastActivity }) => (
                     <tr key={user.id} className="border-t border-white/6">
                       <td className="px-4 py-4 text-white">{user.name || "Не заполнено"}</td>
-                      <td className="px-4 py-4">{user.login}</td>
                       <td className="px-4 py-4">{user.email}</td>
-                      <td className="px-4 py-4">{user.isPremium ? "Да" : "Нет"}</td>
+                      <td className="px-4 py-4">
+                        <PremiumToggle userId={user.id} initialValue={user.isPremium} />
+                      </td>
                       <td className="px-4 py-4">{userTracks.length}</td>
                       <td className="px-4 py-4">{averageProgress}%</td>
                       <td className="px-4 py-4">{user.restartCount}</td>
@@ -215,7 +223,7 @@ export default async function AnalyticsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={9} className="px-4 py-6 text-[#838383]">
+                    <td colSpan={8} className="px-4 py-6 text-[#838383]">
                       Пользователей пока нет
                     </td>
                   </tr>
