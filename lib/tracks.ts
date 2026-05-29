@@ -359,6 +359,23 @@ export async function reassignTracksOwner(sourceUserIds: string[], targetUserId:
   }
 }
 
+export async function deleteTracksByUserId(userId: string): Promise<string[]> {
+  const data = await loadTracks();
+  const deletedTrackIds: string[] = [];
+
+  for (const [trackId, track] of Object.entries(data.tracks)) {
+    if (track.userId !== userId) continue;
+    deletedTrackIds.push(trackId);
+    delete data.tracks[trackId];
+  }
+
+  if (deletedTrackIds.length) {
+    await saveTracks(data);
+  }
+
+  return deletedTrackIds;
+}
+
 export async function getTracksStorageInfo(): Promise<TracksStorageInfo> {
   const tracksPath = getTracksPath();
   return {

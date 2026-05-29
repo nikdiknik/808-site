@@ -309,6 +309,22 @@ export async function deleteUserProfilesById(userIds: string[]): Promise<void> {
   }
 }
 
+export async function deleteUserAccountById(userId: string): Promise<UserProfile | null> {
+  const data = await loadUsers();
+  const profile = data.users[userId];
+  if (!profile) return null;
+
+  delete data.users[userId];
+  for (const [credentialKey, credential] of Object.entries(data.credentials)) {
+    if (credential.userId === userId) {
+      delete data.credentials[credentialKey];
+    }
+  }
+
+  await saveUsers(data);
+  return normalizeProfile(profile);
+}
+
 export async function getUsersStorageInfo(): Promise<UsersStorageInfo> {
   const usersPath = getUsersPath();
   return {

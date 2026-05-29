@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { PremiumToggle } from "@/components/admin/premium-toggle";
+import { UserDeleteButton } from "@/components/admin/user-delete-button";
 import { getAnalyticsSnapshot, getAnalyticsStorageInfo } from "@/lib/analytics";
 import { experienceLabels, problemLabels, type ExperienceId, type ProblemId } from "@/lib/options";
 import { dawOptions, genreOptions, roleOptions } from "@/lib/profile-options";
@@ -196,7 +197,7 @@ export default async function AnalyticsPage() {
           </div>
 
           <div className="mt-6 overflow-x-auto rounded-[24px] border border-white/6 bg-[#1E1E1E]">
-            <table className="min-w-[980px] w-full border-collapse text-left text-[14px] text-[#D8D8D8]">
+            <table className="min-w-[1080px] w-full border-collapse text-left text-[14px] text-[#D8D8D8]">
               <thead className="heading-font text-[11px] uppercase text-[#78F761]">
                 <tr>
                   <th className="px-4 py-4">Никнейм</th>
@@ -207,6 +208,7 @@ export default async function AnalyticsPage() {
                   <th className="px-4 py-4">Перезапусков</th>
                   <th className="px-4 py-4">Создан</th>
                   <th className="px-4 py-4">Активность</th>
+                  <th className="px-4 py-4">Действия</th>
                 </tr>
               </thead>
               <tbody>
@@ -223,11 +225,14 @@ export default async function AnalyticsPage() {
                       <td className="px-4 py-4">{user.restartCount}</td>
                       <td className="px-4 py-4">{formatDate(user.createdAt)}</td>
                       <td className="px-4 py-4">{formatDate(lastActivity)}</td>
+                      <td className="px-4 py-4">
+                        <UserDeleteButton userId={user.id} userLabel={user.name || user.email || user.id} />
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="px-4 py-6 text-[#838383]">
+                    <td colSpan={9} className="px-4 py-6 text-[#838383]">
                       Пользователей пока нет
                     </td>
                   </tr>
