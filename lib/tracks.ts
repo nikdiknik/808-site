@@ -340,6 +340,25 @@ export async function getAllTracksSnapshot(): Promise<Track[]> {
     .sort((first, second) => Date.parse(second.updatedAt) - Date.parse(first.updatedAt));
 }
 
+export async function reassignTracksOwner(sourceUserIds: string[], targetUserId: string): Promise<void> {
+  if (!sourceUserIds.length) return;
+
+  const sourceUserIdSet = new Set(sourceUserIds);
+  const data = await loadTracks();
+  let changed = false;
+
+  for (const track of Object.values(data.tracks)) {
+    if (!sourceUserIdSet.has(track.userId)) continue;
+    track.userId = targetUserId;
+    track.updatedAt = new Date().toISOString();
+    changed = true;
+  }
+
+  if (changed) {
+    await saveTracks(data);
+  }
+}
+
 export async function getTracksStorageInfo(): Promise<TracksStorageInfo> {
   const tracksPath = getTracksPath();
   return {

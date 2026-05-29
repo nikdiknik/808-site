@@ -5,10 +5,10 @@ import { PremiumToggle } from "@/components/admin/premium-toggle";
 import { getAnalyticsSnapshot, getAnalyticsStorageInfo } from "@/lib/analytics";
 import { experienceLabels, problemLabels, type ExperienceId, type ProblemId } from "@/lib/options";
 import { dawOptions, genreOptions, roleOptions } from "@/lib/profile-options";
-import { getAllTracksSnapshot, getTracksStorageInfo, type Track } from "@/lib/tracks";
+import { getAllTracksSnapshot, getTracksStorageInfo, reassignTracksOwner, type Track } from "@/lib/tracks";
 import { trackStatusLabels, trackStatuses } from "@/lib/track-options";
 import { getCurrentUser } from "@/lib/supabase/server";
-import { getUserProfilesSnapshot, getUsersStorageInfo, type UserProfile } from "@/lib/users";
+import { deleteUserProfilesById, getUserProfilesSnapshot, getUsersStorageInfo, mergeDuplicateUserProfilesByEmail, type UserProfile } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +100,10 @@ export default async function AnalyticsPage() {
   if (currentUser?.role !== "admin") {
     redirect("/auth/sign-in");
   }
+
+  const merges = await mergeDuplicateUserProfilesByEmail();
+  await Promise.all(merges.map((merge) => reassignTracksOwner(merge.mergedUserIds, merge.targetUserId)));
+  await deleteUserProfilesById(merges.flatMap((merge) => merge.mergedUserIds));
 
   const [analytics, analyticsStorage, users, usersStorage, tracks, tracksStorage] = await Promise.all([
     getAnalyticsSnapshot(),

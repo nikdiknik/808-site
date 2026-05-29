@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createPasswordSession } from "@/lib/supabase/server";
-import { registerPasswordUser } from "@/lib/users";
+import { reassignTracksOwner } from "@/lib/tracks";
+import { deleteUserProfilesById, registerPasswordUser } from "@/lib/users";
 
 const requestSchema = z
   .object({
@@ -23,7 +24,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const profile = await registerPasswordUser(parsed.data);
+    const { profile, mergedUserIds } = await registerPasswordUser(parsed.data);
+    await reassignTracksOwner(mergedUserIds, profile.id);
+    await deleteUserProfilesById(mergedUserIds);
     await createPasswordSession(profile.id);
     return NextResponse.json({ ok: true });
   } catch (error) {

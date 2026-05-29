@@ -48,6 +48,12 @@ type UsersData = {
   credentials: Record<string, PasswordCredential>;
 };
 
+export type UserMergeResult = {
+  email: string;
+  targetUserId: string;
+  mergedUserIds: string[];
+};
+
 export type UsersStorageInfo = {
   usersPath: string;
   fileExists: boolean;
@@ -113,6 +119,106 @@ function createDefaultProfile(user: AppUser): UserProfile {
   };
 }
 
+function normalizeProfile(profile: UserProfile): UserProfile {
+  return {
+    ...profile,
+    login: profile.login || profile.email,
+    avatarUrl: profile.avatarUrl || createAvatarUrl(profile.id),
+    roles: profile.roles || [],
+    genres: profile.genres || [],
+    daw: profile.daw || [],
+    demos: profile.demos || [],
+  };
+}
+
+function mergeArrays<T>(...arrays: T[][]) {
+  return Array.from(new Set(arrays.flat()));
+}
+
+function choosePrimaryProfile(profiles: UserProfile[], credentialUserId?: string) {
+  return [...profiles].sort((first, second) => {
+    const demoDiff = (second.demos?.length || 0) - (first.demos?.length || 0);
+    if (demoDiff) return demoDiff;
+
+    if (first.isPremium !== second.isPremium) return first.isPremium ? -1 : 1;
+
+    if (first.id === credentialUserId && second.id !== credentialUserId) return -1;
+    if (second.id === credentialUserId && first.id !== credentialUserId) return 1;
+
+    return Date.parse(first.createdAt || "") - Date.parse(second.createdAt || "");
+  })[0];
+}
+
+function mergeProfileGroup(
+  data: UsersData,
+  email: string,
+  profiles: UserProfile[],
+  credential?: PasswordCredential,
+  nextName?: string,
+  options: { deleteSources?: boolean } = {},
+): UserMergeResult | null {
+  if (!profiles.length) return null;
+
+  const normalizedProfiles = profiles.map(normalizeProfile);
+  const targetProfile = normalizeProfile(choosePrimaryProfile(normalizedProfiles, credential?.userId));
+  const sourceProfiles = normalizedProfiles.filter((profile) => profile.id !== targetProfile.id);
+  const mergedUserIds = sourceProfiles.map((profile) => profile.id);
+  const earliestCreatedAt = normalizedProfiles
+    .map((profile) => profile.createdAt)
+    .filter(Boolean)
+    .sort((first, second) => Date.parse(first) - Date.parse(second))[0];
+
+  const mergedProfile: UserProfile = {
+    ...targetProfile,
+    email,
+    login: email,
+    name: nextName?.trim() || targetProfile.name || normalizedProfiles.find((profile) => profile.name)?.name || "",
+    avatarUrl: targetProfile.avatarUrl || createAvatarUrl(targetProfile.id),
+    isPremium: normalizedProfiles.some((profile) => profile.isPremium),
+    restartCount: normalizedProfiles.reduce((sum, profile) => sum + (profile.restartCount || 0), 0),
+    createdAt: earliestCreatedAt || targetProfile.createdAt,
+    roles: mergeArrays(...normalizedProfiles.map((profile) => profile.roles || [])),
+    experience: targetProfile.experience || normalizedProfiles.find((profile) => profile.experience)?.experience || "",
+    genres: mergeArrays(...normalizedProfiles.map((profile) => profile.genres || [])),
+    daw: mergeArrays(...normalizedProfiles.map((profile) => profile.daw || [])),
+    demos: mergeArrays(...normalizedProfiles.map((profile) => profile.demos || [])),
+  };
+
+  data.users[targetProfile.id] = mergedProfile;
+  if (options.deleteSources ?? true) {
+    for (const profile of sourceProfiles) {
+      delete data.users[profile.id];
+    }
+  }
+
+  return {
+    email,
+    targetUserId: targetProfile.id,
+    mergedUserIds,
+  };
+}
+
+function getProfilesByEmail(data: UsersData, email: string) {
+  return Object.values(data.users).filter((profile) => normalizeEmail(profile.email || profile.login || "") === email);
+}
+
+function normalizeCredentialsForEmail(data: UsersData, email: string, targetUserId: string, credential?: PasswordCredential) {
+  for (const [key, existingCredential] of Object.entries(data.credentials)) {
+    if (normalizeEmail(existingCredential.email || existingCredential.login || key) === email) {
+      delete data.credentials[key];
+    }
+  }
+
+  if (credential) {
+    data.credentials[email] = {
+      ...credential,
+      userId: targetUserId,
+      login: email,
+      email,
+    };
+  }
+}
+
 export async function ensureUserProfile(user: AppUser): Promise<UserProfile> {
   const data = await loadUsers();
   const existingProfile = data.users[user.id];
@@ -148,6 +254,59 @@ export async function getUserProfilesSnapshot(): Promise<UserProfile[]> {
     daw: profile.daw || [],
     demos: profile.demos || [],
   }));
+}
+
+export async function mergeDuplicateUserProfilesByEmail(): Promise<UserMergeResult[]> {
+  const data = await loadUsers();
+  const emails = new Set(
+    [
+      ...Object.values(data.users).map((profile) => normalizeEmail(profile.email || profile.login || "")),
+      ...Object.values(data.credentials).map((credential) => normalizeEmail(credential.email || credential.login || "")),
+    ].filter(Boolean),
+  );
+  const results: UserMergeResult[] = [];
+  let changed = false;
+
+  for (const email of emails) {
+    const profiles = getProfilesByEmail(data, email);
+    const credential = Object.values(data.credentials).find((item) => normalizeEmail(item.email || item.login) === email);
+    if (profiles.length <= 1) {
+      if (profiles[0] && credential?.userId !== profiles[0].id) {
+        normalizeCredentialsForEmail(data, email, profiles[0].id, credential);
+        changed = true;
+      }
+      continue;
+    }
+
+    const result = mergeProfileGroup(data, email, profiles, credential, undefined, { deleteSources: false });
+    if (!result) continue;
+    normalizeCredentialsForEmail(data, email, result.targetUserId, credential);
+    results.push(result);
+    changed = true;
+  }
+
+  if (changed) {
+    await saveUsers(data);
+  }
+
+  return results;
+}
+
+export async function deleteUserProfilesById(userIds: string[]): Promise<void> {
+  if (!userIds.length) return;
+
+  const data = await loadUsers();
+  let changed = false;
+
+  for (const userId of userIds) {
+    if (!data.users[userId]) continue;
+    delete data.users[userId];
+    changed = true;
+  }
+
+  if (changed) {
+    await saveUsers(data);
+  }
 }
 
 export async function getUsersStorageInfo(): Promise<UsersStorageInfo> {
@@ -223,38 +382,53 @@ export async function registerPasswordUser({
   email: string;
   name: string;
   password: string;
-}): Promise<UserProfile> {
+}): Promise<{ profile: UserProfile; mergedUserIds: string[] }> {
   const data = await loadUsers();
   const normalizedEmail = normalizeEmail(email);
 
-  const existingCredential = Object.values(data.credentials).find(
-    (credential) => credential.login === normalizedEmail || credential.email === normalizedEmail,
-  );
-  if (existingCredential) {
+  const existingCredential = Object.values(data.credentials).find((credential) => credential.login === normalizedEmail || credential.email === normalizedEmail);
+  const profiles = getProfilesByEmail(data, normalizedEmail);
+  if (existingCredential && !profiles.length) {
     const error = new Error("USER_EXISTS");
     error.name = "USER_EXISTS";
     throw error;
   }
 
   const now = new Date().toISOString();
-  const userId = `local_${randomBytes(12).toString("hex")}`;
   const { salt, hash } = hashPassword(password);
-  const profile = createDefaultProfile({ id: userId, email: normalizedEmail, role: "user" });
-  profile.login = normalizedEmail;
-  profile.name = name.trim();
-  profile.createdAt = now;
+  let targetProfile: UserProfile;
+  let mergedUserIds: string[] = [];
 
-  data.users[userId] = profile;
-  data.credentials[normalizedEmail] = {
-    userId,
+  if (profiles.length) {
+    const mergeResult = mergeProfileGroup(data, normalizedEmail, profiles, existingCredential, name, { deleteSources: false });
+    const targetUserId = mergeResult?.targetUserId || profiles[0].id;
+    targetProfile = {
+      ...normalizeProfile(data.users[targetUserId]),
+      email: normalizedEmail,
+      login: normalizedEmail,
+      name: name.trim(),
+    };
+    data.users[targetUserId] = targetProfile;
+    mergedUserIds = mergeResult?.mergedUserIds || [];
+  } else {
+    const userId = `local_${randomBytes(12).toString("hex")}`;
+    targetProfile = createDefaultProfile({ id: userId, email: normalizedEmail, role: "user" });
+    targetProfile.login = normalizedEmail;
+    targetProfile.name = name.trim();
+    targetProfile.createdAt = now;
+    data.users[userId] = targetProfile;
+  }
+
+  normalizeCredentialsForEmail(data, normalizedEmail, targetProfile.id, {
+    userId: targetProfile.id,
     login: normalizedEmail,
     email: normalizedEmail,
     passwordHash: hash,
     passwordSalt: salt,
     createdAt: now,
-  };
+  });
   await saveUsers(data);
-  return profile;
+  return { profile: targetProfile, mergedUserIds };
 }
 
 export async function verifyPasswordUser(loginOrEmail: string, password: string): Promise<UserProfile | null> {
