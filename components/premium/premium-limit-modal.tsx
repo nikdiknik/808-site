@@ -84,6 +84,7 @@ export function PremiumLimitModal({ variant, onClose }: PremiumLimitModalProps) 
               {[
                 "Перейди в сообщество 808 Демок в VK",
                 "Отправь VK Donut от 99 ₽",
+                "Напиши свою почту в сообщения сообщества",
                 "Premium откроется через некоторое время",
               ].map((item, index) => (
                 <li key={item} className="flex gap-3">
