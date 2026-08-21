@@ -137,7 +137,7 @@ export default async function AppDashboardPage() {
             <div className="min-w-0">
               <p className="heading-font inline-flex text-[12px] uppercase text-[#78F761]">Дэшборд</p>
               <h1 className="heading-font mt-5 w-full text-[34px] leading-[1.08] text-white sm:text-[48px] lg:text-[60px]">
-                Привет! Что&nbsp;делаем с&nbsp;треком сегодня?
+                Йоу! Что&nbsp;делаем с&nbsp;треком сегодня?
               </h1>
               <p className="mt-5 w-full text-[18px] leading-relaxed text-[#C9C9C9] md:text-[20px]">
                 Нужен творческий перезапуск или будем вести прогресс по демкам?
